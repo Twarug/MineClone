@@ -15,7 +15,7 @@ workspace("MineClone")
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
     
     group("Vendors")
-    -- include("MineClone/vendor")
+        include("MineClone/vendor/premake5.lua")
     group ("")
 
 project("MineClone")
@@ -44,7 +44,12 @@ project("MineClone")
 	})
 
     includedirs ({ 
-        "%{prj.name}/src" -- project
+        "%{prj.name}/src", -- project
+        "%{prj.name}/vendor/glfw/include", -- GLFW 
+    })
+
+    links ({
+        "GLFW"
     })
 
     debugdir ("run")
