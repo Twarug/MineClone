@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include <memory>
 
+#include "MineClone/Math/Math.h"
+
 namespace mc
 {
     template<typename T>

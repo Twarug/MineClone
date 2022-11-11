@@ -8,6 +8,12 @@ namespace mc
         Window(u32 width, u32 height, std::string_view title);
         ~Window();
 
+        Window(const Window& window) = delete;
+        Window& operator=(const Window& window) = delete;
+
+        Window(Window&& window) = default;
+        Window& operator=(Window&& window) = default;
+
         void Update() const;
         
         void Resize(u32 width, u32 height);
@@ -18,6 +24,9 @@ namespace mc
         
         void* GetNativeWindow() { return m_nativeWindow; }
         const void* GetNativeWindow() const { return m_nativeWindow; }
+
+    public:
+        bool operator==(const Window& oth) const;
         
     private:
         void* m_nativeWindow{};

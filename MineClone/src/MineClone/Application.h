@@ -1,10 +1,12 @@
 ﻿#pragma once
 
-#include <MineClone/Window.h>
+#include "MineClone/Window.h"
+
+#include "MineClone/Event/WindowEvents.h"
 
 namespace mc
 {
-    class Application
+    class Application : EventHandler<WindowCloseEvent>
     {
     public:
         std::string name;
@@ -15,6 +17,9 @@ namespace mc
         void Run();
 
         void Close() { m_isRunning = false; }
+        
+    protected:
+        void OnEvent(WindowCloseEvent& ev) override;
         
     public:
         static Application& Get() { return *s_instance; }

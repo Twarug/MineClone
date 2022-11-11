@@ -5,7 +5,7 @@
 namespace mc
 {
     Application::Application(std::string_view name)
-        :name(name)
+        : name(name), m_isRunning(false)
     {
         m_window = CreateScope<Window>(1280, 720, name);
     }
@@ -20,4 +20,11 @@ namespace mc
             m_window->Update();
         }
     }
+
+    void Application::OnEvent(WindowCloseEvent& ev)
+    {
+        if(ev.window == *m_window)
+            m_isRunning = false;
+    }
+
 }
