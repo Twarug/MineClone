@@ -1,0 +1,27 @@
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+
+# Binaries
+**/bin/
+bin-int/
+**/cache
+
+# JetBrins IDE's
+.idea
+
+# CMake Files
+*/CMakeLists.txt
+*.cmake
+
+# Visual Studio
+.vs/
+**.sln
+**.vcxproj
+**.vcxproj.filters
+**.vcxproj.user
+
+# Project
+*.log
