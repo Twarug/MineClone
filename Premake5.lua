@@ -46,6 +46,7 @@ project("MineClone")
     includedirs ({ 
         "%{prj.name}/src", -- project
         "%{prj.name}/vendor/glfw/include", -- GLFW 
+        "%{prj.name}/vendor/glm"
     })
 
     links ({
