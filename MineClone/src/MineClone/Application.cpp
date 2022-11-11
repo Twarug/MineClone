@@ -6,12 +6,18 @@ namespace mc
 {
     Application::Application(std::string_view name)
         :name(name)
-    {}
+    {
+        m_window = CreateScope<Window>(1280, 720, name);
+    }
 
     
     void Application::Run()
     {
-        std::cout << "Run App\n";
+        m_isRunning = true;
+        
+        while (m_isRunning)
+        {
+            m_window->Update();
+        }
     }
-
 }

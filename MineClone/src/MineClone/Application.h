@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <MineClone/Window.h>
+
 namespace mc
 {
     class Application
@@ -12,8 +14,14 @@ namespace mc
         
         void Run();
 
+        void Close() { m_isRunning = false; }
+        
     public:
         static Application& Get() { return *s_instance; }
+
+    private:
+        bool m_isRunning;
+        Scope<Window> m_window;
 
     private:
         inline static Application* s_instance = nullptr;
