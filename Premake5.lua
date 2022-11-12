@@ -40,17 +40,20 @@ project("MineClone")
     })
     
     defines ({
-		"_CRT_SECURE_NO_WARNINGS"
+		"_CRT_SECURE_NO_WARNINGS",
+        "GLFW_INCLUDE_VULKAN"
 	})
 
     includedirs ({ 
         "%{prj.name}/src", -- project
         "%{prj.name}/vendor/glfw/include", -- GLFW 
-        "%{prj.name}/vendor/glm"
+        "%{prj.name}/vendor/glm", -- glm
+        os.getenv("VULKAN_SDK").."/Include", -- Vulkan
     })
 
     links ({
-        "GLFW"
+        "GLFW", -- GLFW
+        os.getenv("VULKAN_SDK").."/Lib/vulkan-1.lib", -- Vulkan
     })
 
     debugdir ("run")

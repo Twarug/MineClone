@@ -3,6 +3,12 @@
 
 #include "MineClone/Math/Math.h"
 
+#ifdef NDEBUG
+    #define MC_DEBUGBREAK() __debugbreak()
+#else
+    #define MC_DEBUGBREAK()
+#endif
+
 namespace mc
 {
     template<typename T>

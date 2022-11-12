@@ -12,17 +12,22 @@ namespace mc
         : m_size(width, height)
     {
         if(s_windowCount == 0)
+        {
             if(!glfwInit()){
                 std::cerr << "Unable to initialize GLFW!!!";
                 exit(-1);
             }
+            
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        }
 
         GLFWwindow* window;
         m_nativeWindow = window = glfwCreateWindow(width, height, title.data(), nullptr, nullptr);
-
-        glfwMakeContextCurrent(window);
         s_windowCount++;
 
+        glfwMakeContextCurrent(window);
+        
+        
         glfwSetWindowUserPointer(window, this);
         
         glfwSetWindowSizeCallback(window, [](GLFWwindow* window, int width, int height) {
