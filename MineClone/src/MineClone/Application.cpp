@@ -9,7 +9,6 @@ namespace mc
     Application::Application(std::string_view name)
         : name(name), m_isRunning(false)
     {
-        m_window = CreateScope<Window>(1280, 720, name);
         s_instance = this;
     }
 
@@ -18,7 +17,8 @@ namespace mc
     {
         m_isRunning = true;
 
-        RendererAPI::Init();
+        m_window = CreateScope<Window>(1280, 720, name);
+        RendererAPI::Init(*m_window);
         
         while (m_isRunning)
         {

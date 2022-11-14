@@ -6,17 +6,17 @@
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
 
-#define VK_CHECK(x) if((x) != VK_SUCCESS) { throw std::runtime_error("Check failed!!!"); }
-
 namespace mc
 {
     struct QueueFamilyIndices
     {
-        u32 graphicsFamily = -1;
+        u32 graphicsFamily = ~0u;
+        u32 presentFamily = ~0u;
 
         bool IsComplete() const
         {
-            return graphicsFamily != -1;
+            return graphicsFamily != ~0u &&
+                   presentFamily != ~0u;
         }
     };
     
@@ -29,6 +29,10 @@ namespace mc
 
         VkDevice device;
         VkQueue graphicsQueue;
+        VkQueue presentQueue;
+
+        VkSurfaceKHR surface;
+
         
         VkAllocationCallbacks* allocator = nullptr;
 
@@ -64,7 +68,7 @@ namespace mc
     }
     
     
-    void RendererAPI::Init()
+    void RendererAPI::Init(Window& window)
     {
         std::cout << "Renderer Init.\n";
 
@@ -99,7 +103,8 @@ namespace mc
                 createInfo.enabledLayerCount = 0;
             }
             
-            VK_CHECK(vkCreateInstance(&createInfo, g_state.allocator, &g_state.instance))
+            if(vkCreateInstance(&createInfo, g_state.allocator, &g_state.instance) != VK_SUCCESS)
+                throw std::runtime_error("Unable to create instance");
         }
 
         // Available Extensions
@@ -131,6 +136,13 @@ namespace mc
                 std::cerr << "Unable to create Vulkan Debug Callback\n";
         }
 
+        // Create Surface
+        {
+            if (glfwCreateWindowSurface(g_state.instance, static_cast<GLFWwindow*>(window.GetNativeWindow()), g_state.allocator, &g_state.surface) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create window surface!");
+            }
+        }
+        
         // Select Physical Device
         {
             uint32_t deviceCount = 0;
@@ -162,19 +174,30 @@ namespace mc
         {
             float queuePriority = 1.f;
             
-            VkDeviceQueueCreateInfo queueCreateInfo = {
+            std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+            // Graphics Queue
+            queueCreateInfos.push_back({
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .queueFamilyIndex = g_state.indices.graphicsFamily,
                 .queueCount = 1,
                 .pQueuePriorities = &queuePriority
-            };
+            });
+
+            // Present Queue
+            queueCreateInfos.push_back({
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .queueFamilyIndex = g_state.indices.presentFamily,
+                .queueCount = 1,
+                .pQueuePriorities = &queuePriority
+            });
             
             VkPhysicalDeviceFeatures deviceFeatures = {};
 
             VkDeviceCreateInfo createInfo = {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-                .queueCreateInfoCount = 1,
-                .pQueueCreateInfos = &queueCreateInfo,
+                .queueCreateInfoCount = static_cast<u32>(queueCreateInfos.size()),
+                .pQueueCreateInfos = queueCreateInfos.data(),
 
                 .pEnabledFeatures = &deviceFeatures,
             };
@@ -195,6 +218,7 @@ namespace mc
             }
             
             vkGetDeviceQueue(g_state.device, g_state.indices.graphicsFamily, 0, &g_state.graphicsQueue);
+            vkGetDeviceQueue(g_state.device, g_state.indices.presentFamily, 0, &g_state.presentQueue);
         }
     }
 
@@ -202,7 +226,7 @@ namespace mc
     {
         std::cout << "Renderer Deinit.\n";
         
-        vkDestroyDevice(g_state.device, nullptr);
+        vkDestroyDevice(g_state.device, g_state.allocator);
 
         if(g_enableValidationLayers)
         {
@@ -211,6 +235,7 @@ namespace mc
                 func(g_state.instance, g_state.debugMessenger, g_state.allocator);
         }
         
+        vkDestroySurfaceKHR(g_state.instance, g_state.surface, g_state.allocator);
         vkDestroyInstance(g_state.instance, g_state.allocator);
     }
 
@@ -283,11 +308,16 @@ namespace mc
             std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
             vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-            int i = 0;
+            u32 i = 0;
             for (const auto& queueFamily : queueFamilies) {
                 if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
                     indices.graphicsFamily = i;
                 
+                VkBool32 presentSupport = false;
+                vkGetPhysicalDeviceSurfaceSupportKHR(device, i, g_state.surface, &presentSupport);
+                if (presentSupport)
+                    indices.presentFamily = i;
+
                 if (indices.IsComplete())
                     break;
                     
