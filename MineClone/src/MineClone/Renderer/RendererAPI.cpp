@@ -6,18 +6,32 @@
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
 
-#define VK_CHECK(x) if((x) != VK_SUCCESS) { MC_DEBUGBREAK(); }
+#define VK_CHECK(x) if((x) != VK_SUCCESS) { throw std::runtime_error("Check failed!!!"); }
 
 namespace mc
 {
+    struct QueueFamilyIndices
+    {
+        u32 graphicsFamily = -1;
+
+        bool IsComplete() const
+        {
+            return graphicsFamily != -1;
+        }
+    };
     
     struct GlobalState
     {
-        VkInstance instance;
-        
-        VkAllocationCallbacks* allocator;
+        VkInstance instance = VK_NULL_HANDLE;
 
-        VkDebugUtilsMessengerEXT debugMessenger;
+        QueueFamilyIndices indices;
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+        VkDevice device;
+        
+        VkAllocationCallbacks* allocator = nullptr;
+
+        VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
         
         std::vector<VkExtensionProperties> extensions;
     };
@@ -33,6 +47,7 @@ namespace mc
         bool g_enableValidationLayers = false;
     #endif
 
+    
     namespace details
     {
         VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -43,6 +58,8 @@ namespace mc
         
         bool CheckValidationLayerSupport();
         std::vector<const char*> GetRequiredExtensions();
+
+        int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices);
     }
     
     
@@ -112,6 +129,33 @@ namespace mc
             else
                 std::cerr << "Unable to create Vulkan Debug Callback\n";
         }
+
+        // Select Physical Device
+        {
+            uint32_t deviceCount = 0;
+            vkEnumeratePhysicalDevices(g_state.instance, &deviceCount, nullptr);
+
+            if (deviceCount == 0)
+                throw std::runtime_error("failed to find GPUs with Vulkan support!");
+
+            std::vector<VkPhysicalDevice> devices(deviceCount);
+            vkEnumeratePhysicalDevices(g_state.instance, &deviceCount, devices.data());
+
+            int bestScore = -1;
+            for (const auto& device : devices)
+            {
+                QueueFamilyIndices indices;
+                if (int score = details::GetDeviceScore(device, indices); score >= 0 && bestScore < score) {
+                    g_state.physicalDevice = device;
+                    g_state.indices = indices;
+                    bestScore = score;
+                }
+            }
+
+            if (g_state.physicalDevice == VK_NULL_HANDLE) {
+                throw std::runtime_error("failed to find a suitable GPU!");
+            }
+        }
     }
 
     void RendererAPI::Deinit()
@@ -131,6 +175,17 @@ namespace mc
 
     namespace details
     {
+        VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData) {
+
+            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+
+            return VK_FALSE;
+        }
+        
         bool CheckValidationLayerSupport() {
             uint32_t layerCount;
             vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -167,15 +222,59 @@ namespace mc
             return extensions;
         }
 
-        VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-            void* pUserData) {
+        int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices)
+        {
+            int score = 0;
+            VkPhysicalDeviceProperties deviceProperties;
+            VkPhysicalDeviceFeatures deviceFeatures;
+            vkGetPhysicalDeviceProperties(device, &deviceProperties);
+            vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+            
+            if(!deviceFeatures.geometryShader)
+                return -1;
 
-            return VK_FALSE;
+
+            uint32_t queueFamilyCount = 0;
+            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+            std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+            vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+            int i = 0;
+            for (const auto& queueFamily : queueFamilies) {
+                if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                    indices.graphicsFamily = i;
+                
+                if (indices.IsComplete())
+                    break;
+                    
+                i++;
+            }
+
+            if(!indices.IsComplete())
+                return -1;
+            
+
+            switch (deviceProperties.deviceType)
+            { 
+                case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+                case VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM:
+                    score += 1;
+                    break;
+                
+                case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    score += 10;
+                    break;
+                
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    score += 20;
+                    break;
+            }
+            
+            return score;
         }
     }
 }

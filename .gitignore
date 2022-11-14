@@ -11,6 +11,7 @@ bin-int/
 
 # JetBrins IDE's
 .idea
+**.DotSettings.user
 
 # CMake Files
 */CMakeLists.txt
