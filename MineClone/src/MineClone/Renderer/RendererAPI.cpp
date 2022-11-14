@@ -28,6 +28,7 @@ namespace mc
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
         VkDevice device;
+        VkQueue graphicsQueue;
         
         VkAllocationCallbacks* allocator = nullptr;
 
@@ -156,11 +157,52 @@ namespace mc
                 throw std::runtime_error("failed to find a suitable GPU!");
             }
         }
+
+        // Create Device
+        {
+            float queuePriority = 1.f;
+            
+            VkDeviceQueueCreateInfo queueCreateInfo = {
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .queueFamilyIndex = g_state.indices.graphicsFamily,
+                .queueCount = 1,
+                .pQueuePriorities = &queuePriority
+            };
+            
+            VkPhysicalDeviceFeatures deviceFeatures = {};
+
+            VkDeviceCreateInfo createInfo = {
+                .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+                .queueCreateInfoCount = 1,
+                .pQueueCreateInfos = &queueCreateInfo,
+
+                .pEnabledFeatures = &deviceFeatures,
+            };
+
+            // Backward compatibility
+            {
+                createInfo.enabledExtensionCount = 0;
+
+                if (g_enableValidationLayers) {
+                    createInfo.enabledLayerCount = static_cast<u32>(VALIDATION_LAYERS.size());
+                    createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
+                } else
+                    createInfo.enabledLayerCount = 0;
+            }
+
+            if (vkCreateDevice(g_state.physicalDevice, &createInfo, g_state.allocator, &g_state.device) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create logical device!");
+            }
+            
+            vkGetDeviceQueue(g_state.device, g_state.indices.graphicsFamily, 0, &g_state.graphicsQueue);
+        }
     }
 
     void RendererAPI::Deinit()
     {
         std::cout << "Renderer Deinit.\n";
+        
+        vkDestroyDevice(g_state.device, nullptr);
 
         if(g_enableValidationLayers)
         {
