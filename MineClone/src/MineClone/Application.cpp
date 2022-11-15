@@ -18,7 +18,7 @@ namespace mc
         m_isRunning = true;
 
         m_window = CreateScope<Window>(1280, 720, name);
-        RendererAPI::Init(*m_window);
+        RendererAPI::Init();
         
         while (m_isRunning)
         {
