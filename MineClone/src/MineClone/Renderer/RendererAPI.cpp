@@ -82,6 +82,10 @@ namespace mc
         std::vector<const char*> GetRequiredExtensions();
 
         int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain);
+
+        std::vector<byte> ReadFile(const std::string& filename);
+        
+        VkShaderModule CreateShaderModule(const std::vector<byte>& code);
     }
 
     void CreateSwapchain();
@@ -250,6 +254,7 @@ namespace mc
     {
         std::cout << "Renderer Deinit.\n";
 
+        
         for (auto imageView : g_state.swapchainImageViews)
             vkDestroyImageView(g_state.device, imageView, g_state.allocator);
 
@@ -340,33 +345,65 @@ namespace mc
             g_state.swapchainExtent = extent;
             g_state.swapchainImageFormat = surfaceFormat.format;
         }
-        
-        // Image Views
-        g_state.swapchainImageViews.resize(imageCount);
 
-        for (u64 i = 0; i < imageCount; i++) {
-            VkImageViewCreateInfo createInfo = {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                .image = g_state.swapchainImages[i],
-                .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .format = g_state.swapchainImageFormat,
-                .components = {
-                    .r = VK_COMPONENT_SWIZZLE_IDENTITY,
-                    .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-                    .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-                    .a = VK_COMPONENT_SWIZZLE_IDENTITY,
-                },
-                .subresourceRange = {
-                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                    .baseMipLevel = 0,
-                    .levelCount = 1,
-                    .baseArrayLayer = 0,
-                    .layerCount =  1,
-                }
+        // Image Views
+        {
+            g_state.swapchainImageViews.resize(imageCount);
+
+            for (u64 i = 0; i < imageCount; i++) {
+                VkImageViewCreateInfo createInfo = {
+                    .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                    .image = g_state.swapchainImages[i],
+                    .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                    .format = g_state.swapchainImageFormat,
+                    .components = {
+                        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+                    },
+                    .subresourceRange = {
+                        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                        .baseMipLevel = 0,
+                        .levelCount = 1,
+                        .baseArrayLayer = 0,
+                        .layerCount =  1,
+                    }
+                };
+
+                if (vkCreateImageView(g_state.device, &createInfo, g_state.allocator, &g_state.swapchainImageViews[i]) != VK_SUCCESS)
+                    throw std::runtime_error("failed to create image views!");
+            }
+        }
+
+        // Graphics Pipeline
+        {
+            auto vertShaderCode = details::ReadFile("assets/shaders/vert.spv");
+            auto fragShaderCode = details::ReadFile("assets/shaders/frag.spv");
+            
+            VkShaderModule vertShaderModule = details::CreateShaderModule(vertShaderCode);
+            VkShaderModule fragShaderModule = details::CreateShaderModule(fragShaderCode);
+
+            VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = VK_SHADER_STAGE_VERTEX_BIT,
+                .module = vertShaderModule,
+                .pName = "main",
             };
 
-            if (vkCreateImageView(g_state.device, &createInfo, g_state.allocator, &g_state.swapchainImageViews[i]) != VK_SUCCESS)
-                throw std::runtime_error("failed to create image views!");
+            VkPipelineShaderStageCreateInfo fragShaderStageInfo = {
+                .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+                .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+                .module = fragShaderModule,
+                .pName = "main",
+            };
+            
+            VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+            
+            
+            vkDestroyShaderModule(g_state.device, fragShaderModule, g_state.allocator);
+            vkDestroyShaderModule(g_state.device, vertShaderModule, g_state.allocator);
         }
     }
 
@@ -521,6 +558,37 @@ namespace mc
             }
             
             return score;
+        }
+
+        std::vector<byte> ReadFile(const std::string& filename) {
+            std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+            if (!file.is_open())
+                throw std::runtime_error("failed to open file!");
+
+            size_t fileSize = file.tellg();
+            std::vector<byte> buffer(fileSize);
+            
+            file.seekg(0);
+            file.read(static_cast<char*>(static_cast<void*>(buffer.data())), fileSize);
+
+            file.close();
+
+            return buffer;
+        }
+
+        VkShaderModule CreateShaderModule(const std::vector<byte>& code) {
+            VkShaderModuleCreateInfo createInfo = {
+                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+                .codeSize = code.size(),
+                .pCode = reinterpret_cast<const uint32_t*>(code.data()),
+            };
+
+            VkShaderModule shaderModule;
+            if (vkCreateShaderModule(g_state.device, &createInfo, g_state.allocator, &shaderModule) != VK_SUCCESS)
+                throw std::runtime_error("failed to create shader module!");
+
+            return shaderModule;
         }
     }
 }

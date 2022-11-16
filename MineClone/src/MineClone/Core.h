@@ -11,6 +11,8 @@
 
 namespace mc
 {
+    using byte = u8;
+    
     template<typename T>
     using Ref = std::shared_ptr<T>;
 
