@@ -1,3 +1,9 @@
+if os.getenv("VULKAN_SDK") == nil then
+    print("You need to install Vulkan SDK, or set %VULKAN_SDK% env varialbe.")
+    os.exit(-1)
+end
+
+
 workspace("MineClone")
     architecture("x86_64")
     startproject("MineClone")
@@ -11,9 +17,9 @@ workspace("MineClone")
     flags({
         "MultiProcessorCompile"
     })
-    
+
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-    
+
     group("Vendors")
         include("MineClone/vendor/premake5.lua")
     group ("")
@@ -27,10 +33,10 @@ project("MineClone")
 
     targetdir ("bin/" .. outputdir .. "/%{prj.name}")
     objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
-    
+
     pchheader ("mcpch.h")
     pchsource ("%{prj.name}/src/mcpch.cpp")
-    
+
     files ({
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
@@ -38,15 +44,15 @@ project("MineClone")
         "%{prj.name}/out/**",
         "Premake5.lua"
     })
-    
+
     defines ({
 		"_CRT_SECURE_NO_WARNINGS",
         "GLFW_INCLUDE_VULKAN"
 	})
 
-    includedirs ({ 
+    includedirs ({
         "%{prj.name}/src", -- project
-        "%{prj.name}/vendor/glfw/include", -- GLFW 
+        "%{prj.name}/vendor/glfw/include", -- GLFW
         "%{prj.name}/vendor/glm", -- glm
         os.getenv("VULKAN_SDK").."/Include", -- Vulkan
     })
@@ -57,10 +63,10 @@ project("MineClone")
     })
 
     debugdir ("run")
-    
+
     filter ("system:windows")
 		systemversion ("latest")
-		
+
 	filter ("configurations:Debug")
 		runtime ("Debug")
 		symbols ("On")
