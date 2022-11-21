@@ -140,6 +140,9 @@ namespace mc
     {
         std::cout << "Renderer Deinit.\n";
         
+        for (auto framebuffer : g_state.swapchainFramebuffers)
+            vkDestroyFramebuffer(g_state.device, framebuffer, g_state.allocator);
+
         vkDestroyPipeline(g_state.device, g_state.graphicsPipeline, g_state.allocator);
         vkDestroyPipelineLayout(g_state.device, g_state.pipelineLayout, g_state.allocator);
         
@@ -621,6 +624,31 @@ namespace mc
             throw std::runtime_error("failed to create graphics pipeline!");
     }
 
+    void CreateFramebuffers()
+    {
+        u64 imageCount = g_state.swapchainImageViews.size();
+        g_state.swapchainFramebuffers.resize(imageCount);
+
+        for (size_t i = 0; i < imageCount; i++) {
+            VkImageView attachments[] = {
+                g_state.swapchainImageViews[i]
+            };
+
+            VkFramebufferCreateInfo framebufferInfo = {
+                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+                .renderPass = g_state.renderPass,
+                .attachmentCount = 1,
+                .pAttachments = attachments,
+                .width = g_state.swapchainExtent.width,
+                .height = g_state.swapchainExtent.height,
+                .layers = 1,
+            };
+
+            if (vkCreateFramebuffer(g_state.device, &framebufferInfo, g_state.allocator, &g_state.swapchainFramebuffers[i]) != VK_SUCCESS)
+                throw std::runtime_error("failed to create framebuffer!");
+        }
+    }
+    
     namespace details
     {
         VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
