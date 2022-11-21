@@ -9,5 +9,8 @@ namespace mc
     public:
         static void Init();
         static void Deinit();
+        static void RenderFrame();
+        
+        static void Resize(u32 width, u32 height);
     };
 }

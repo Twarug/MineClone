@@ -6,7 +6,7 @@
 
 namespace mc
 {
-    class Application : EventHandler<WindowCloseEvent>
+    class Application : EventHandler<WindowCloseEvent, WindowResizeEvent>
     {
     public:
         std::string name;
@@ -24,6 +24,7 @@ namespace mc
         
     protected:
         void OnEvent(WindowCloseEvent& ev) override;
+        void OnEvent(WindowResizeEvent& ev) override;
         
     public:
         static Application& Get() { return *s_instance; }

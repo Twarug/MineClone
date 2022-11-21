@@ -23,6 +23,7 @@ namespace mc
         while (m_isRunning)
         {
             m_window->Update();
+            RendererAPI::RenderFrame();
         }
         
         RendererAPI::Deinit();
@@ -32,6 +33,11 @@ namespace mc
     {
         if(ev.window == *m_window)
             m_isRunning = false;
+    }
+
+    void Application::OnEvent(WindowResizeEvent& ev)
+    {
+        RendererAPI::Resize(ev.GetWidth(), ev.GetHeight());
     }
 
 }
