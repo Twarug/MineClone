@@ -99,7 +99,7 @@ namespace mc
     void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateSyncObjects();
-
+    
     void RecordCommandBuffers(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     
     void RecreateSwapchain();
@@ -115,6 +115,8 @@ namespace mc
         
         bool CheckValidationLayerSupport();
         std::vector<const char*> GetRequiredExtensions();
+
+        SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice device);
 
         int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain);
 
@@ -302,7 +304,7 @@ namespace mc
             VkDebugUtilsMessengerCreateInfoEXT createInfo = {
                 .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
                 .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
-                .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+                .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
                 .pfnUserCallback = details::DebugCallback,
                 .pUserData = nullptr // Optional
             };
@@ -366,13 +368,14 @@ namespace mc
             .pQueuePriorities = &queuePriority
         });
 
-        // Present Queue
-        queueCreateInfos.push_back({
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = g_state.indices.presentFamily,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority
-        });
+        if(g_state.indices.presentFamily != g_state.indices.graphicsFamily)
+            // Present Queue
+            queueCreateInfos.push_back({
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .queueFamilyIndex = g_state.indices.presentFamily,
+                .queueCount = 1,
+                .pQueuePriorities = &queuePriority
+            });
         
         VkPhysicalDeviceFeatures deviceFeatures = {};
 
@@ -421,7 +424,7 @@ namespace mc
             }
 
         VkExtent2D extent;
-        if (g_state.swapchainSupportDetails.capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        if (g_state.swapchainSupportDetails.capabilities.currentExtent.width != std::numeric_limits<u32>::max())
             extent = g_state.swapchainSupportDetails.capabilities.currentExtent;
         else {
             int width, height;
@@ -841,6 +844,8 @@ namespace mc
         vkDeviceWaitIdle(g_state.device);
 
         CleanupSwapchain();
+
+        g_state.swapchainSupportDetails = details::GetSwapchainSupportDetails(g_state.physicalDevice);
         
         CreateSwapchain();
         CreateImageViews();
@@ -908,6 +913,27 @@ namespace mc
             return extensions;
         }
 
+        SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice device)
+        {
+            SwapchainSupportDetails swapchain;
+
+            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, g_state.surface, &swapchain.capabilities);
+
+            u32 formatCount;
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, nullptr);
+            
+            swapchain.formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, swapchain.formats.data());
+
+            u32 presentModeCount;
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, nullptr);
+
+            swapchain.presentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, swapchain.presentModes.data());
+            return swapchain;
+        }
+
+        
         int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain)
         {
             int score = 0;
@@ -968,28 +994,14 @@ namespace mc
             }
 
             // Required Swapchain Support
-            {
-                vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, g_state.surface, &swapchain.capabilities);
-
-                u32 formatCount;
-                vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, nullptr);
+            swapchain = GetSwapchainSupportDetails(device);
                 
-                if (formatCount == 0)
-                    return -1;
+            if (swapchain.formats.empty())
+                return -1;
 
-                swapchain.formats.resize(formatCount);
-                vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, swapchain.formats.data());
-
-                u32 presentModeCount;
-                vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, nullptr);
-
-                if (presentModeCount == 0)
-                    return -1;
-
-                swapchain.presentModes.resize(presentModeCount);
-                vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, swapchain.presentModes.data());
-            }
-
+            if (swapchain.presentModes.empty())
+                return -1;
+            
             switch (deviceProperties.deviceType)
             { 
                 case VK_PHYSICAL_DEVICE_TYPE_OTHER:
