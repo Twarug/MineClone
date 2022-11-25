@@ -5,6 +5,7 @@
 
 namespace mc
 {
+    // ReSharper disable CppInconsistentNaming
     using u8  = uint8_t;
     using u16 = uint16_t;
     using u32 = uint32_t;
@@ -39,7 +40,7 @@ namespace mc
     using uint2 = Vec2<u32>;
     using uint3 = Vec3<u32>;
     using uint4 = Vec4<u32>;
-
+    // ReSharper restore CppInconsistentNaming
 
     template<int W, int H>
     using Mat = glm::mat<W, H, f32>;
@@ -53,6 +54,7 @@ namespace mc
 }
 
 
+// ReSharper disable once CppInconsistentNaming
 template<typename T, int D, typename CharT>
 struct std::formatter<mc::Vec<T, D>, CharT> : std::formatter<T, CharT>
 {
@@ -71,6 +73,7 @@ struct std::formatter<mc::Vec<T, D>, CharT> : std::formatter<T, CharT>
     }
 };
 
+// ReSharper disable once CppInconsistentNaming
 template<int W, int H, typename CharT>
 struct std::formatter<mc::Mat<W, H>, CharT> : std::formatter<mc::Vec<mc::f32, H>, CharT>
 {
