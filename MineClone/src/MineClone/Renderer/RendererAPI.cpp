@@ -84,26 +84,8 @@ namespace mc
     #else
         bool g_enableValidationLayers = false;
     #endif
-
-    void CreateInstance();
-    void SetupDebugMessenger();
-    void CreateSurface();
-    
-    void PickPhysicalDevice();
-    void CreateLogicalDevice();
-    void CreateSwapchain();
-    void CreateImageViews();
-    void CreateRenderPass();
-    void CreateGraphicsPipeline();
-    void CreateFramebuffers();
-    void CreateCommandPool();
-    void CreateCommandBuffers();
-    void CreateSyncObjects();
     
     void RecordCommandBuffers(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-    
-    void RecreateSwapchain();
-    void CleanupSwapchain();
     
     namespace details
     {
@@ -179,7 +161,7 @@ namespace mc
     }
 
     
-    void RendererAPI::RenderFrame()
+    void RendererAPI::BeginFrame()
     {        
         vkWaitForFences(g_state.device, 1, &g_state.inFlightFences[g_state.currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -244,12 +226,18 @@ namespace mc
         g_state.currentFrame = (g_state.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
+    void RendererAPI::EndFrame()
+    {
+        
+    }
+
+
     void RendererAPI::Resize(u32 width, u32 height)
     {
         g_state.swapchainNeedsRecreation = true;
     }
 
-    void CreateInstance()
+    void RendererAPI::CreateInstance()
     {
         // Check for validation layers
         if (g_enableValidationLayers && !details::CheckValidationLayerSupport())
@@ -297,7 +285,7 @@ namespace mc
         }
     }
 
-    void SetupDebugMessenger()
+    void RendererAPI::SetupDebugMessenger()
     {
         // Debug Setup
         if(g_enableValidationLayers) {
@@ -317,14 +305,14 @@ namespace mc
         }
     }
 
-    void CreateSurface()
+    void RendererAPI::CreateSurface()
     {
         // Create Surface
         if (glfwCreateWindowSurface(g_state.instance, static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()), g_state.allocator, &g_state.surface) != VK_SUCCESS)
             throw std::runtime_error("failed to create window surface!");
     }
 
-    void PickPhysicalDevice()
+    void RendererAPI::PickPhysicalDevice()
     {
         // Select Physical Device
         uint32_t deviceCount = 0;
@@ -353,7 +341,7 @@ namespace mc
             throw std::runtime_error("failed to find a suitable GPU!");
     }
 
-    void CreateLogicalDevice()
+    void RendererAPI::CreateLogicalDevice()
     {
         // Create Device
         float queuePriority = 1.f;
@@ -407,7 +395,7 @@ namespace mc
         vkGetDeviceQueue(g_state.device, g_state.indices.presentFamily, 0, &g_state.presentQueue);
     }
     
-    void CreateSwapchain()
+    void RendererAPI::CreateSwapchain()
     {        
         VkSurfaceFormatKHR surfaceFormat = g_state.swapchainSupportDetails.formats[0];
         for (const auto& availableFormat : g_state.swapchainSupportDetails.formats)
@@ -479,7 +467,7 @@ namespace mc
         g_state.swapchainImageFormat = surfaceFormat.format;
     }
 
-    void CreateImageViews()
+    void RendererAPI::CreateImageViews()
     {
         // Image Views
         u64 imageCount = g_state.swapchainImages.size();
@@ -511,7 +499,7 @@ namespace mc
         }
     }
 
-    void CreateRenderPass()
+    void RendererAPI::CreateRenderPass()
     {
         VkAttachmentDescription colorAttachment = {
             .format = g_state.swapchainImageFormat,
@@ -547,7 +535,7 @@ namespace mc
             throw std::runtime_error("failed to create render pass!");
     }
     
-    void CreateGraphicsPipeline()
+    void RendererAPI::CreateGraphicsPipeline()
     {
         // Graphics Pipeline
         auto vertShaderCode = details::ReadFile("assets/shaders/shader.vert.spv");
@@ -705,7 +693,7 @@ namespace mc
         vkDestroyShaderModule(g_state.device, vertShaderModule, g_state.allocator);
     }
 
-    void CreateFramebuffers()
+    void RendererAPI::CreateFramebuffers()
     {
         u64 imageCount = g_state.swapchainImageViews.size();
         g_state.swapchainFramebuffers.resize(imageCount);
@@ -730,7 +718,7 @@ namespace mc
         }
     }
 
-    void CreateCommandPool()
+    void RendererAPI::CreateCommandPool()
     {
         VkCommandPoolCreateInfo poolInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -742,7 +730,7 @@ namespace mc
             throw std::runtime_error("failed to create command pool!");
     }
 
-    void CreateCommandBuffers()
+    void RendererAPI::CreateCommandBuffers()
     {
         g_state.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
         
@@ -757,7 +745,7 @@ namespace mc
             throw std::runtime_error("failed to allocate command buffers!");
     }
     
-    void CreateSyncObjects()
+    void RendererAPI::CreateSyncObjects()
     {
         g_state.imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         g_state.renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -778,6 +766,38 @@ namespace mc
                 vkCreateFence(g_state.device, &fenceInfo, nullptr, &g_state.inFlightFences[i]) != VK_SUCCESS)
                 throw std::runtime_error("failed to create semaphores!");
 
+    }
+    
+    void RendererAPI::RecreateSwapchain()
+    {
+        int width = 0, height = 0;
+        GLFWwindow* window = (GLFWwindow*)Application::Get().GetMainWindow().GetNativeWindow();
+        glfwGetFramebufferSize(window, &width, &height);
+        while (width == 0 || height == 0) {
+            glfwGetFramebufferSize(window, &width, &height);
+            glfwWaitEvents();
+        }
+
+        vkDeviceWaitIdle(g_state.device);
+
+        CleanupSwapchain();
+
+        g_state.swapchainSupportDetails = details::GetSwapchainSupportDetails(g_state.physicalDevice);
+        
+        CreateSwapchain();
+        CreateImageViews();
+        CreateFramebuffers();
+    }
+
+    void RendererAPI::CleanupSwapchain()
+    {
+        for (size_t i = 0; i < g_state.swapchainFramebuffers.size(); i++)
+            vkDestroyFramebuffer(g_state.device, g_state.swapchainFramebuffers[i], g_state.allocator);
+
+        for (size_t i = 0; i < g_state.swapchainImageViews.size(); i++)
+            vkDestroyImageView(g_state.device, g_state.swapchainImageViews[i], g_state.allocator);
+
+        vkDestroySwapchainKHR(g_state.device, g_state.swapchain, g_state.allocator);
     }
     
     void RecordCommandBuffers(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -830,39 +850,6 @@ namespace mc
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
             throw std::runtime_error("failed to record command buffer!");
     }
-
-    void RecreateSwapchain()
-    {
-        int width = 0, height = 0;
-        GLFWwindow* window = (GLFWwindow*)Application::Get().GetMainWindow().GetNativeWindow();
-        glfwGetFramebufferSize(window, &width, &height);
-        while (width == 0 || height == 0) {
-            glfwGetFramebufferSize(window, &width, &height);
-            glfwWaitEvents();
-        }
-
-        vkDeviceWaitIdle(g_state.device);
-
-        CleanupSwapchain();
-
-        g_state.swapchainSupportDetails = details::GetSwapchainSupportDetails(g_state.physicalDevice);
-        
-        CreateSwapchain();
-        CreateImageViews();
-        CreateFramebuffers();
-    }
-
-    void CleanupSwapchain()
-    {
-        for (size_t i = 0; i < g_state.swapchainFramebuffers.size(); i++)
-            vkDestroyFramebuffer(g_state.device, g_state.swapchainFramebuffers[i], g_state.allocator);
-
-        for (size_t i = 0; i < g_state.swapchainImageViews.size(); i++)
-            vkDestroyImageView(g_state.device, g_state.swapchainImageViews[i], g_state.allocator);
-
-        vkDestroySwapchainKHR(g_state.device, g_state.swapchain, g_state.allocator);
-    }
-
     
     namespace details
     {

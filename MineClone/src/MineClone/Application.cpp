@@ -23,7 +23,11 @@ namespace mc
         while (m_isRunning)
         {
             m_window->Update();
-            RendererAPI::RenderFrame();
+            RendererAPI::BeginFrame();
+
+            
+            
+            RendererAPI::EndFrame();
         }
         
         RendererAPI::Deinit();
