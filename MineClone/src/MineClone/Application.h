@@ -35,6 +35,9 @@ namespace mc
 
     private:
         bool m_isRunning;
+
+        std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint;
+        
         Scope<Window> m_window;
 
     private:

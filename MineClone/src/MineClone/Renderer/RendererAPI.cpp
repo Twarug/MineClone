@@ -82,11 +82,11 @@ namespace mc
 
         QueueFamilyIndices indices;
         SwapchainSupportDetails swapchainSupportDetails;
-        //
-        // DeletionQueue mainDeletionQueue;
-        //
+       
         VkAllocationCallbacks* allocator = nullptr;
         std::vector<VkExtensionProperties> extensions;
+
+        UploadContext uploadContext;
 
     public:
         FrameData& GetCurrentFrame()
@@ -110,9 +110,7 @@ namespace mc
     #else
         bool g_enableValidationLayers = false;
     #endif
-    
-    void RecordCommandBuffers(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-    
+        
     namespace details
     {
         VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -131,6 +129,7 @@ namespace mc
         std::vector<byte> ReadFile(const std::string& filename);
         
         VkShaderModule CreateShaderModule(const std::vector<byte>& code);
+        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
     }
 
     
@@ -154,7 +153,7 @@ namespace mc
     }
 
     void RendererAPI::Deinit()
-    {
+    {        
         std::cout << "Renderer Deinit.\n";
         vkDeviceWaitIdle(g_state.device);
 
@@ -164,7 +163,11 @@ namespace mc
         vkDestroyPipelineLayout(g_state.device, g_state.pipelineLayout, g_state.allocator);
 
         vkDestroyRenderPass(g_state.device, g_state.renderPass, g_state.allocator);
-                
+
+        
+        vkDestroyFence(g_state.device, g_state.uploadContext.uploadFence, g_state.allocator);
+        vkDestroyCommandPool(g_state.device, g_state.uploadContext.commandPool, g_state.allocator);
+        
         for(u64 i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++) {
             FrameData& frame = g_state.frames[i];
             
@@ -188,7 +191,12 @@ namespace mc
         vkDestroyInstance(g_state.instance, g_state.allocator);
     }
 
-    
+    void RendererAPI::Wait()
+    {
+        vkDeviceWaitIdle(g_state.device);
+    }
+
+
     void RendererAPI::BeginFrame()
     {
         FrameData& frame = g_state.GetCurrentFrame();
@@ -208,12 +216,60 @@ namespace mc
 
         vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
 
-        RecordCommandBuffers(frame.commandBuffer, frame.currentImageIndex);
+        // Begin Command Buffer
+
+        VkCommandBufferBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = 0, // Optional
+            .pInheritanceInfo = nullptr, // Optional
+        };
+
+        if (vkBeginCommandBuffer(frame.commandBuffer, &beginInfo) != VK_SUCCESS)
+            throw std::runtime_error("failed to begin recording command buffer!");
+
+        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+        
+        VkRenderPassBeginInfo renderPassInfo = {
+            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+            .renderPass = g_state.renderPass,
+            .framebuffer = g_state.swapchainFramebuffers[frame.currentImageIndex],
+            .renderArea = {
+                .offset = {0, 0},
+                .extent = g_state.swapchainExtent,
+            },
+            .clearValueCount = 1,
+            .pClearValues = &clearColor,
+        };
+        vkCmdBeginRenderPass(frame.commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        vkCmdBindPipeline(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.graphicsPipeline);
+
+        VkViewport viewport = {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = static_cast<float>(g_state.swapchainExtent.width),
+            .height = static_cast<float>(g_state.swapchainExtent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+        vkCmdSetViewport(frame.commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor = {
+            .offset = {0, 0},
+            .extent = g_state.swapchainExtent,
+        };
+        vkCmdSetScissor(frame.commandBuffer, 0, 1, &scissor);
     }
 
     void RendererAPI::EndFrame()
     {
         FrameData& frame = g_state.GetCurrentFrame();
+        
+        vkCmdEndRenderPass(frame.commandBuffer);
+
+        if (vkEndCommandBuffer(frame.commandBuffer) != VK_SUCCESS)
+            throw std::runtime_error("failed to record command buffer!");
+
         
         VkSemaphore waitSemaphores[] = { frame.renderSemaphore };
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -264,6 +320,84 @@ namespace mc
     void RendererAPI::Resize(u32 width, u32 height)
     {
         g_state.swapchainNeedsRecreation = true;
+    }
+
+    void RendererAPI::DeleteBuffer(AllocatedBuffer& buffer)
+    {        
+        vkDestroyBuffer(g_state.device, buffer.buffer, g_state.allocator);
+        vkFreeMemory(g_state.device, buffer.memory, g_state.allocator);
+
+        buffer = AllocatedBuffer();
+    }
+
+    void RendererAPI::Draw(const AllocatedBuffer& vertexBuffer)
+    {
+        FrameData& frame = g_state.GetCurrentFrame();
+        
+        VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
+        VkDeviceSize offsets[] = {0};
+        
+        vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
+    }
+
+    void RendererAPI::CopyBuffer(const AllocatedBuffer& srcBuffer, const AllocatedBuffer& dstBuffer, u64 size)
+    {
+        ImmediateSubmit([=](VkCommandBuffer cmd) {
+            VkBufferCopy copyRegion = {
+                .srcOffset = 0, // Optional
+                .dstOffset = 0, // Optional
+                .size = size,
+            };
+            
+            vkCmdCopyBuffer(cmd, srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);
+        });
+    }
+
+    void RendererAPI::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function)
+    {
+        VkCommandBuffer commandBuffer = g_state.uploadContext.commandBuffer;
+        VkFence fence = g_state.uploadContext.uploadFence;
+        //begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
+        // VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+        VkCommandBufferBeginInfo beginInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+            .pInheritanceInfo = nullptr,
+        };
+
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+            throw std::runtime_error("failed to begin recording command buffer!");
+
+
+        function(commandBuffer);
+
+
+        if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+            throw std::runtime_error("failed to record command buffer!");
+
+        VkSubmitInfo submit = {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .pNext = nullptr,
+            .waitSemaphoreCount = 0,
+            .pWaitSemaphores = nullptr,
+            .pWaitDstStageMask = nullptr,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .signalSemaphoreCount = 0,
+            .pSignalSemaphores = nullptr,
+        };
+
+        //submit command buffer to the queue and execute it.
+        // _renderFence will now block until the graphic commands finish execution
+        if(vkQueueSubmit(g_state.graphicsQueue, 1, &submit, fence) != VK_SUCCESS)
+            throw std::runtime_error("failed to submit draw command buffer!");
+
+        vkWaitForFences(g_state.device, 1, &fence, true, std::numeric_limits<int>::max());
+        vkResetFences(g_state.device, 1, &fence);
+
+        vkResetCommandPool(g_state.device, g_state.uploadContext.commandPool, 0);
     }
 
     void RendererAPI::CreateInstance()
@@ -600,12 +734,15 @@ namespace mc
             .pDynamicStates = dynamicStates.data(),
         };
 
+        auto bindingDescription = Vertex2D::GetBindingDescription();
+        auto attributeDescriptions = Vertex2D::GetAttributeDescriptions();
+
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-            .vertexBindingDescriptionCount = 0,
-            .pVertexBindingDescriptions = nullptr, // Optional
-            .vertexAttributeDescriptionCount = 0,
-            .pVertexAttributeDescriptions = nullptr, // Optional
+            .vertexBindingDescriptionCount = 1,
+            .pVertexBindingDescriptions = &bindingDescription,
+            .vertexAttributeDescriptionCount = static_cast<u32>(attributeDescriptions.size()),
+            .pVertexAttributeDescriptions = attributeDescriptions.data(),
         };
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly = {
@@ -759,31 +896,46 @@ namespace mc
             if (vkCreateCommandPool(g_state.device, &poolInfo, g_state.allocator, &g_state.frames[i].commandPool) != VK_SUCCESS)
                 throw std::runtime_error("failed to create command pool!");
         }
+
+        VkCommandPoolCreateInfo uploadPoolInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = g_state.indices.graphicsFamily,
+        };
+        
+        if (vkCreateCommandPool(g_state.device, &uploadPoolInfo, g_state.allocator, &g_state.uploadContext.commandPool) != VK_SUCCESS)
+            throw std::runtime_error("failed to create command pool!");
     }
 
     void RendererAPI::CreateCommandBuffers()
     {
-        // g_state.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
         for(int i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++){
             VkCommandBufferAllocateInfo allocInfo = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
                 .commandPool = g_state.frames[i].commandPool,
                 .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-                .commandBufferCount = 1 /*static_cast<u32>(g_state.commandBuffers.size())*/,
+                .commandBufferCount = 1,
             };
 
             if (vkAllocateCommandBuffers(g_state.device, &allocInfo, &g_state.frames[i].commandBuffer) != VK_SUCCESS)
                 throw std::runtime_error("failed to allocate command buffers!");
         }
+
+        
+        //allocate the default command buffer that we will use for rendering
+        VkCommandBufferAllocateInfo cmdAllocInfo = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = g_state.uploadContext.commandPool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
+        };
+
+        if (vkAllocateCommandBuffers(g_state.device, &cmdAllocInfo, &g_state.uploadContext.commandBuffer) != VK_SUCCESS)
+            throw std::runtime_error("failed to allocate command buffers!");
     }
     
     void RendererAPI::CreateSyncObjects()
     {
-        // g_state.imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        // g_state.renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        // g_state.inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
         };
@@ -796,9 +948,15 @@ namespace mc
         for(u64 i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++)
             if (vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.frames[i].renderSemaphore) != VK_SUCCESS ||
                 vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.frames[i].presentSemaphore) != VK_SUCCESS ||
-                vkCreateFence(g_state.device, &fenceInfo, nullptr, &g_state.frames[i].renderFence) != VK_SUCCESS)
+                vkCreateFence(g_state.device, &fenceInfo, g_state.allocator, &g_state.frames[i].renderFence) != VK_SUCCESS)
                 throw std::runtime_error("failed to create semaphores!");
 
+        VkFenceCreateInfo uploadFenceInfo = {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = 0,
+        };
+        if(vkCreateFence(g_state.device, &uploadFenceInfo, g_state.allocator, &g_state.uploadContext.uploadFence) != VK_SUCCESS)
+            throw std::runtime_error("failed to create fence!");
     }
     
     void RendererAPI::RecreateSwapchain()
@@ -832,58 +990,49 @@ namespace mc
 
         vkDestroySwapchainKHR(g_state.device, g_state.swapchain, g_state.allocator);
     }
-    
-    void RecordCommandBuffers(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-        VkCommandBufferBeginInfo beginInfo = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .flags = 0, // Optional
-            .pInheritanceInfo = nullptr, // Optional
-        };
 
-        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
-            throw std::runtime_error("failed to begin recording command buffer!");
-
-        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    AllocatedBuffer RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, const void* data)
+    {
+        AllocatedBuffer buffer = CreateBuffer(size, usage, properties);
         
-        VkRenderPassBeginInfo renderPassInfo = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-            .renderPass = g_state.renderPass,
-            .framebuffer = g_state.swapchainFramebuffers[imageIndex],
-            .renderArea = {
-                .offset = {0, 0},
-                .extent = g_state.swapchainExtent,
-            },
-            .clearValueCount = 1,
-            .pClearValues = &clearColor,
-        };
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.graphicsPipeline);
-
-        VkViewport viewport = {
-            .x = 0.0f,
-            .y = 0.0f,
-            .width = static_cast<float>(g_state.swapchainExtent.width),
-            .height = static_cast<float>(g_state.swapchainExtent.height),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-        VkRect2D scissor = {
-            .offset = {0, 0},
-            .extent = g_state.swapchainExtent,
-        };
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-        vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-
-        vkCmdEndRenderPass(commandBuffer);
-
-        if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
-            throw std::runtime_error("failed to record command buffer!");
+        void* mem = nullptr;
+        vkMapMemory(g_state.device, buffer.memory, 0, size, 0, &mem);
+        memcpy(mem, data, size);
+        vkUnmapMemory(g_state.device, buffer.memory);
+        
+        return buffer;
     }
-    
+
+    AllocatedBuffer RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+    {
+        AllocatedBuffer buffer{};
+
+        VkBufferCreateInfo createInfo = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size = size,
+            .usage = usage,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        };
+        
+        vkCreateBuffer(g_state.device, &createInfo, g_state.allocator, &buffer.buffer);
+
+        VkMemoryRequirements memRequirements;
+        vkGetBufferMemoryRequirements(g_state.device, buffer.buffer, &memRequirements);
+        
+        VkMemoryAllocateInfo allocInfo{
+            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+            .allocationSize = memRequirements.size,
+            .memoryTypeIndex = details::FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+        };
+        
+        if (vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &buffer.memory) != VK_SUCCESS)
+            throw std::runtime_error("failed to allocate vertex buffer memory!");
+
+        vkBindBufferMemory(g_state.device, buffer.buffer, buffer.memory, 0);
+
+        return buffer;
+    }
+
     namespace details
     {
         VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
@@ -1072,6 +1221,20 @@ namespace mc
                 throw std::runtime_error("failed to create shader module!");
 
             return shaderModule;
+        }
+
+        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+        {
+            VkPhysicalDeviceMemoryProperties memProperties;
+            vkGetPhysicalDeviceMemoryProperties(g_state.physicalDevice, &memProperties);
+            
+            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+                if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                    return i;
+                }
+            }
+
+            throw std::runtime_error("failed to find suitable memory type!");
         }
     }
 }
