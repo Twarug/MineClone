@@ -17,9 +17,12 @@
 #include <array>
 #include <vector>
 #include <unordered_map>
+#include <queue>
+#include <deque>
 
 // Others
 #include <memory>
+#include <ranges>
 #include <chrono>
 #include <algorithm>
 #include <functional>

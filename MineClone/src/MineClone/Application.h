@@ -6,13 +6,13 @@
 
 namespace mc
 {
-    class Application : EventHandler<WindowCloseEvent, WindowResizeEvent>
+    class Application final : EventHandler<WindowCloseEvent, WindowResizeEvent>
     {
     public:
         std::string name;
     
     public:
-        Application(std::string_view name);
+        explicit Application(std::string_view name);
         
         void Run();
 
@@ -21,6 +21,10 @@ namespace mc
 
         Window& GetMainWindow() { return *m_window; }
         const Window& GetMainWindow() const { return *m_window; }
+        
+    private:
+        void Update();
+        void Render();
         
     protected:
         void OnEvent(WindowCloseEvent& ev) override;

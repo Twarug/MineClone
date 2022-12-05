@@ -1,15 +1,15 @@
 ﻿#include "mcpch.h"
 #include "RendererAPI.h"
 
+#include "RendererTypes.h"
 #include "MineClone/Application.h"
+
 
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
 
 namespace mc
-{
-    constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-    
+{    
     struct QueueFamilyIndices
     {
         u32 graphicsFamily = ~0u;
@@ -28,6 +28,28 @@ namespace mc
         std::vector<VkPresentModeKHR> presentModes;
     };
     
+    struct FrameData
+    {
+        static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
+        
+	    VkSemaphore presentSemaphore = VK_NULL_HANDLE;
+        VkSemaphore renderSemaphore = VK_NULL_HANDLE;
+        VkFence renderFence = VK_NULL_HANDLE;
+        
+        // DeletionQueue frameDeletionQueue{};
+
+        u32 currentImageIndex = 0;
+        
+        VkCommandPool commandPool = VK_NULL_HANDLE;
+        VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
+
+        AllocatedBuffer cameraBuffer{};
+        VkDescriptorSet globalDescriptor = VK_NULL_HANDLE;
+
+        AllocatedBuffer objectBuffer{};
+        VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
+    };
+    
     struct GlobalState
     {
         VkInstance instance;
@@ -41,32 +63,36 @@ namespace mc
         VkQueue presentQueue;
 
         VkSwapchainKHR swapchain;
-        std::vector<VkImage> swapchainImages;
         VkFormat swapchainImageFormat;
         VkExtent2D swapchainExtent;
-        std::vector<VkImageView> swapchainImageViews;
-        std::vector<VkFramebuffer> swapchainFramebuffers;
 
         VkRenderPass renderPass;
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
+        
+        std::vector<VkImage> swapchainImages;
+        std::vector<VkImageView> swapchainImageViews;
+        std::vector<VkFramebuffer> swapchainFramebuffers;
 
-        VkCommandPool commandPool;
-        std::vector<VkCommandBuffer> commandBuffers;
-
-        std::vector<VkSemaphore> imageAvailableSemaphores;
-        std::vector<VkSemaphore> renderFinishedSemaphores;
-        std::vector<VkFence> inFlightFences;
         uint32_t currentFrame = 0;
+        std::array<FrameData, FrameData::MAX_FRAMES_IN_FLIGHT> frames;
 
         bool swapchainNeedsRecreation = false;
         uint2 currentWindowSize;
 
         QueueFamilyIndices indices;
         SwapchainSupportDetails swapchainSupportDetails;
-        
+        //
+        // DeletionQueue mainDeletionQueue;
+        //
         VkAllocationCallbacks* allocator = nullptr;
         std::vector<VkExtensionProperties> extensions;
+
+    public:
+        FrameData& GetCurrentFrame()
+        {
+            return frames[currentFrame];
+        }
     };
     static inline GlobalState g_state{};
 
@@ -139,14 +165,16 @@ namespace mc
 
         vkDestroyRenderPass(g_state.device, g_state.renderPass, g_state.allocator);
                 
-        for(u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(g_state.device, g_state.imageAvailableSemaphores[i], g_state.allocator);
-            vkDestroySemaphore(g_state.device, g_state.renderFinishedSemaphores[i], g_state.allocator);
-            vkDestroyFence(g_state.device, g_state.inFlightFences[i], g_state.allocator);
+        for(u64 i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++) {
+            FrameData& frame = g_state.frames[i];
+            
+            vkDestroySemaphore(g_state.device, frame.presentSemaphore, g_state.allocator);
+            vkDestroySemaphore(g_state.device, frame.renderSemaphore, g_state.allocator);
+            vkDestroyFence(g_state.device, frame.renderFence, g_state.allocator);
+
+            vkDestroyCommandPool(g_state.device, frame.commandPool, g_state.allocator);
         }
         
-        vkDestroyCommandPool(g_state.device, g_state.commandPool, g_state.allocator);
-
         vkDestroyDevice(g_state.device, g_state.allocator);
 
         if(g_enableValidationLayers)
@@ -162,11 +190,12 @@ namespace mc
 
     
     void RendererAPI::BeginFrame()
-    {        
-        vkWaitForFences(g_state.device, 1, &g_state.inFlightFences[g_state.currentFrame], VK_TRUE, UINT64_MAX);
+    {
+        FrameData& frame = g_state.GetCurrentFrame();
+        vkWaitForFences(g_state.device, 1, &frame.renderFence, true, std::numeric_limits<u64>::max());
+        vkResetFences(g_state.device, 1, &frame.renderFence);
 
-        uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(g_state.device, g_state.swapchain, UINT64_MAX, g_state.imageAvailableSemaphores[g_state.currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(g_state.device, g_state.swapchain, UINT64_MAX, frame.renderSemaphore, VK_NULL_HANDLE, &frame.currentImageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             RecreateSwapchain();
@@ -176,14 +205,19 @@ namespace mc
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
             throw std::runtime_error("failed to acquire swap chain image!");
 
-        vkResetFences(g_state.device, 1, &g_state.inFlightFences[g_state.currentFrame]);
 
-        vkResetCommandBuffer(g_state.commandBuffers[g_state.currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
-        RecordCommandBuffers(g_state.commandBuffers[g_state.currentFrame], imageIndex);
+        vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
 
-        VkSemaphore waitSemaphores[] = {g_state.imageAvailableSemaphores[g_state.currentFrame]};
+        RecordCommandBuffers(frame.commandBuffer, frame.currentImageIndex);
+    }
+
+    void RendererAPI::EndFrame()
+    {
+        FrameData& frame = g_state.GetCurrentFrame();
+        
+        VkSemaphore waitSemaphores[] = { frame.renderSemaphore };
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        VkSemaphore signalSemaphores[] = {g_state.renderFinishedSemaphores[g_state.currentFrame]};
+        VkSemaphore signalSemaphores[] = { frame.presentSemaphore };
 
         VkSubmitInfo submitInfo = {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,            
@@ -192,14 +226,14 @@ namespace mc
             .pWaitDstStageMask = waitStages,
 
             .commandBufferCount = 1,
-            .pCommandBuffers = &g_state.commandBuffers[g_state.currentFrame],
+            .pCommandBuffers = &frame.commandBuffer,
 
             .signalSemaphoreCount = 1,
             .pSignalSemaphores = signalSemaphores,
         };
 
 
-        if (vkQueueSubmit(g_state.graphicsQueue, 1, &submitInfo, g_state.inFlightFences[g_state.currentFrame]) != VK_SUCCESS)
+        if (vkQueueSubmit(g_state.graphicsQueue, 1, &submitInfo, frame.renderFence) != VK_SUCCESS)
             throw std::runtime_error("failed to submit draw command buffer!");
 
         VkSwapchainKHR swapChains[] = {g_state.swapchain};
@@ -212,10 +246,10 @@ namespace mc
             .swapchainCount = 1,
             .pSwapchains = swapChains,
 
-            .pImageIndices = &imageIndex,
+            .pImageIndices = &frame.currentImageIndex,
         };
 
-        result = vkQueuePresentKHR(g_state.presentQueue, &presentInfo);
+        VkResult result = vkQueuePresentKHR(g_state.presentQueue, &presentInfo);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || g_state.swapchainNeedsRecreation) {
             g_state.swapchainNeedsRecreation = false;
@@ -223,12 +257,7 @@ namespace mc
         } else if (result != VK_SUCCESS)
             throw std::runtime_error("failed to present swap chain image!");
 
-        g_state.currentFrame = (g_state.currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-    }
-
-    void RendererAPI::EndFrame()
-    {
-        
+        g_state.currentFrame = (g_state.currentFrame + 1) % FrameData::MAX_FRAMES_IN_FLIGHT;
     }
 
 
@@ -726,30 +755,34 @@ namespace mc
             .queueFamilyIndex = g_state.indices.graphicsFamily,
         };
 
-        if (vkCreateCommandPool(g_state.device, &poolInfo, g_state.allocator, &g_state.commandPool) != VK_SUCCESS)
-            throw std::runtime_error("failed to create command pool!");
+        for(int i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++){
+            if (vkCreateCommandPool(g_state.device, &poolInfo, g_state.allocator, &g_state.frames[i].commandPool) != VK_SUCCESS)
+                throw std::runtime_error("failed to create command pool!");
+        }
     }
 
     void RendererAPI::CreateCommandBuffers()
     {
-        g_state.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        
-        VkCommandBufferAllocateInfo allocInfo = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = g_state.commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = static_cast<u32>(g_state.commandBuffers.size()),
-        };
+        // g_state.commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
-        if (vkAllocateCommandBuffers(g_state.device, &allocInfo, g_state.commandBuffers.data()) != VK_SUCCESS)
-            throw std::runtime_error("failed to allocate command buffers!");
+        for(int i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++){
+            VkCommandBufferAllocateInfo allocInfo = {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                .commandPool = g_state.frames[i].commandPool,
+                .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                .commandBufferCount = 1 /*static_cast<u32>(g_state.commandBuffers.size())*/,
+            };
+
+            if (vkAllocateCommandBuffers(g_state.device, &allocInfo, &g_state.frames[i].commandBuffer) != VK_SUCCESS)
+                throw std::runtime_error("failed to allocate command buffers!");
+        }
     }
     
     void RendererAPI::CreateSyncObjects()
     {
-        g_state.imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        g_state.renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        g_state.inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        // g_state.imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        // g_state.renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        // g_state.inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
         
         VkSemaphoreCreateInfo semaphoreInfo = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -760,10 +793,10 @@ namespace mc
             .flags = VK_FENCE_CREATE_SIGNALED_BIT,
         };
 
-        for(u64 i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-            if (vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.imageAvailableSemaphores[i]) != VK_SUCCESS ||
-                vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.renderFinishedSemaphores[i]) != VK_SUCCESS ||
-                vkCreateFence(g_state.device, &fenceInfo, nullptr, &g_state.inFlightFences[i]) != VK_SUCCESS)
+        for(u64 i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++)
+            if (vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.frames[i].renderSemaphore) != VK_SUCCESS ||
+                vkCreateSemaphore(g_state.device, &semaphoreInfo, g_state.allocator, &g_state.frames[i].presentSemaphore) != VK_SUCCESS ||
+                vkCreateFence(g_state.device, &fenceInfo, nullptr, &g_state.frames[i].renderFence) != VK_SUCCESS)
                 throw std::runtime_error("failed to create semaphores!");
 
     }

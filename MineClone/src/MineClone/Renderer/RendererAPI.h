@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "MineClone/Window.h"
 
 
 namespace mc

@@ -22,15 +22,26 @@ namespace mc
         
         while (m_isRunning)
         {
-            m_window->Update();
-            RendererAPI::BeginFrame();
-
+            Update();
             
-            
-            RendererAPI::EndFrame();
+            {
+                RendererAPI::BeginFrame();
+                Render();
+                RendererAPI::EndFrame();
+            }
         }
         
         RendererAPI::Deinit();
+    }
+
+    void Application::Update()
+    {
+        m_window->Update();
+    }
+
+    void Application::Render()
+    {
+        
     }
 
     void Application::OnEvent(WindowCloseEvent& ev)

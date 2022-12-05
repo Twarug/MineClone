@@ -54,7 +54,7 @@ project("MineClone")
         "%{prj.name}/src", -- project
         "%{prj.name}/vendor/glfw/include", -- GLFW
         "%{prj.name}/vendor/glm", -- glm
-        os.getenv("VULKAN_SDK").."/Include", -- Vulkan
+        os.getenv("VULKAN_SDK").."/Include", -- Vulkan, VMA
     })
 
     links ({
