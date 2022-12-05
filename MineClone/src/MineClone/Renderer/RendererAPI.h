@@ -20,14 +20,18 @@ namespace mc
         template<typename Vertex>
         static AllocatedBuffer CreateVertexBuffer(std::span<Vertex> data);
 
+        template<std::integral Index = u64>
+        static AllocatedBuffer CreateIndexBuffer(std::span<Index> data);
+
         static void DeleteBuffer(AllocatedBuffer& buffer);
         
         static void Draw(const AllocatedBuffer& vertexBuffer);
+        static void Draw(const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount);
 
         static void CopyBuffer(const AllocatedBuffer& srcBuffer, const AllocatedBuffer& dstBuffer, u64 size);
 
         static void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
-        
+
     private:
         static void CreateInstance();
         static void SetupDebugMessenger();

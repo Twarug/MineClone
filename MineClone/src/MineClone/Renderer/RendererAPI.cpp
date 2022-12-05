@@ -340,6 +340,19 @@ namespace mc
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
+    
+    void RendererAPI::Draw(const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount)
+    {
+        FrameData& frame = g_state.GetCurrentFrame();
+        
+        VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
+        VkDeviceSize offsets[] = {0};
+        
+        vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        
+        vkCmdDrawIndexed(frame.commandBuffer, indicesCount, 1, 0, 0, 0);
+    }
 
     void RendererAPI::CopyBuffer(const AllocatedBuffer& srcBuffer, const AllocatedBuffer& dstBuffer, u64 size)
     {

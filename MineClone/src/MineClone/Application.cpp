@@ -8,12 +8,18 @@
 namespace mc
 {
     static const std::vector<Vertex2D> VERTICES = {
-        {{0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}},
-        {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-        {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+        {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+        {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+    };
+
+    static const std::vector<u32> INDICES = {
+        0, 1, 2, 2, 3, 0
     };
 
     AllocatedBuffer g_vertexBuffer;
+    AllocatedBuffer g_indexBuffer;
     
     Application::Application(std::string_view name)
         : name(name), m_isRunning(false)
@@ -30,7 +36,7 @@ namespace mc
         RendererAPI::Init();
 
         g_vertexBuffer = RendererAPI::CreateVertexBuffer(std::span(VERTICES));
-        
+        g_indexBuffer = RendererAPI::CreateIndexBuffer(std::span(INDICES));
         
         while (m_isRunning)
         {
@@ -46,6 +52,7 @@ namespace mc
         RendererAPI::Wait();
         
         RendererAPI::DeleteBuffer(g_vertexBuffer);
+        RendererAPI::DeleteBuffer(g_indexBuffer);
         
         RendererAPI::Deinit();
     }
@@ -67,7 +74,7 @@ namespace mc
     
     void Application::Render()
     {
-        RendererAPI::Draw(g_vertexBuffer);
+        RendererAPI::Draw(g_vertexBuffer, g_indexBuffer, 6);
     }
 
     void Application::OnEvent(WindowCloseEvent& ev)
