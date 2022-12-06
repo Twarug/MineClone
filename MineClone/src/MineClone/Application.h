@@ -36,7 +36,12 @@ namespace mc
     private:
         bool m_isRunning;
 
-        std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint;
+        float m_deltaTime{};
+        std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint = std::chrono::high_resolution_clock::now();
+
+        Mat4 m_projection{1};
+        Mat4 m_view{1};
+        
         
         Scope<Window> m_window;
 

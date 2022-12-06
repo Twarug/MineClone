@@ -2,6 +2,7 @@
 #include "RendererAPI.h"
 
 #include "RendererTypes.h"
+#include "RendererUtils.h"
 #include "MineClone/Application.h"
 
 
@@ -9,24 +10,21 @@
 #include "GLFW/glfw3.h"
 
 namespace mc
-{    
-    struct QueueFamilyIndices
-    {
-        u32 graphicsFamily = ~0u;
-        u32 presentFamily = ~0u;
-
-        bool IsComplete() const
-        {
-            return graphicsFamily != ~0u &&
-                   presentFamily != ~0u;
-        }
+{
+    const std::array VALIDATION_LAYERS = {
+        "VK_LAYER_KHRONOS_validation"
     };
 
-    struct SwapchainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities{};
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
+    const std::array DEVICE_EXTENSIONS = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+
+#if NDEBUG
+    bool g_enableValidationLayers = true;
+#else
+    bool g_enableValidationLayers = false;
+#endif
+    
     
     struct FrameData
     {
@@ -36,18 +34,19 @@ namespace mc
         VkSemaphore renderSemaphore = VK_NULL_HANDLE;
         VkFence renderFence = VK_NULL_HANDLE;
         
-        // DeletionQueue frameDeletionQueue{};
-
         u32 currentImageIndex = 0;
         
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
-        AllocatedBuffer cameraBuffer{};
-        VkDescriptorSet globalDescriptor = VK_NULL_HANDLE;
+        AllocatedBuffer uboBuffer;
+        VkDescriptorSet uboDescriptor = VK_NULL_HANDLE;
 
-        AllocatedBuffer objectBuffer{};
-        VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
+        // AllocatedBuffer cameraBuffer{};
+        // VkDescriptorSet globalDescriptor = VK_NULL_HANDLE;
+        //
+        // AllocatedBuffer objectBuffer{};
+        // VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
     };
     
     struct GlobalState
@@ -66,6 +65,9 @@ namespace mc
         VkFormat swapchainImageFormat;
         VkExtent2D swapchainExtent;
 
+        VkDescriptorSetLayout descriptorSetLayout;
+        VkDescriptorPool descriptorPool;
+        
         VkRenderPass renderPass;
         VkPipelineLayout pipelineLayout;
         VkPipeline graphicsPipeline;
@@ -96,43 +98,6 @@ namespace mc
     };
     static inline GlobalState g_state{};
 
-
-    const std::array VALIDATION_LAYERS = {
-        "VK_LAYER_KHRONOS_validation"
-    };
-
-    const std::array DEVICE_EXTENSIONS = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
-
-    #if NDEBUG
-        bool g_enableValidationLayers = true;
-    #else
-        bool g_enableValidationLayers = false;
-    #endif
-        
-    namespace details
-    {
-        VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-           VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-           VkDebugUtilsMessageTypeFlagsEXT messageType,
-           const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-           void* pUserData);
-        
-        bool CheckValidationLayerSupport();
-        std::vector<const char*> GetRequiredExtensions();
-
-        SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice device);
-
-        int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain);
-
-        std::vector<byte> ReadFile(const std::string& filename);
-        
-        VkShaderModule CreateShaderModule(const std::vector<byte>& code);
-        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-    }
-
-    
     void RendererAPI::Init()
     {
         std::cout << "Renderer Init.\n";
@@ -145,11 +110,18 @@ namespace mc
         CreateSwapchain();
         CreateImageViews();
         CreateRenderPass();
+        
+        CreateUniformBuffers();
+        CreateDescriptorSetLayout();
+        CreateDescriptorPool();
+        CreateDescriptorSets();
+
         CreateGraphicsPipeline();
         CreateFramebuffers();
         CreateCommandPool();
         CreateCommandBuffers();
         CreateSyncObjects();
+
     }
 
     void RendererAPI::Deinit()
@@ -157,7 +129,14 @@ namespace mc
         std::cout << "Renderer Deinit.\n";
         vkDeviceWaitIdle(g_state.device);
 
-        CleanupSwapchain();        
+        CleanupSwapchain();
+        
+        for(FrameData& frame : g_state.frames) {
+            DeleteBuffer(frame.uboBuffer);
+        }
+
+        vkDestroyDescriptorPool(g_state.device, g_state.descriptorPool, g_state.allocator);
+        vkDestroyDescriptorSetLayout(g_state.device, g_state.descriptorSetLayout, g_state.allocator);
         
         vkDestroyPipeline(g_state.device, g_state.graphicsPipeline, g_state.allocator);        
         vkDestroyPipelineLayout(g_state.device, g_state.pipelineLayout, g_state.allocator);
@@ -168,9 +147,7 @@ namespace mc
         vkDestroyFence(g_state.device, g_state.uploadContext.uploadFence, g_state.allocator);
         vkDestroyCommandPool(g_state.device, g_state.uploadContext.commandPool, g_state.allocator);
         
-        for(u64 i = 0; i < FrameData::MAX_FRAMES_IN_FLIGHT; i++) {
-            FrameData& frame = g_state.frames[i];
-            
+        for(FrameData& frame : g_state.frames) {
             vkDestroySemaphore(g_state.device, frame.presentSemaphore, g_state.allocator);
             vkDestroySemaphore(g_state.device, frame.renderSemaphore, g_state.allocator);
             vkDestroyFence(g_state.device, frame.renderFence, g_state.allocator);
@@ -197,7 +174,7 @@ namespace mc
     }
 
 
-    void RendererAPI::BeginFrame()
+    void RendererAPI::BeginFrame(float deltaTime, const Mat4& projection, const Mat4& view)
     {
         FrameData& frame = g_state.GetCurrentFrame();
         vkWaitForFences(g_state.device, 1, &frame.renderFence, true, std::numeric_limits<u64>::max());
@@ -213,6 +190,10 @@ namespace mc
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
             throw std::runtime_error("failed to acquire swap chain image!");
 
+        static float time = 0;
+        time += deltaTime;
+        UniformBufferObject ubo{{deltaTime, time, 0, 0}, projection, view};
+        memcpy(frame.uboBuffer.mappedMemory, &ubo, sizeof(ubo));
 
         vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
 
@@ -336,7 +317,9 @@ namespace mc
         
         VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
         VkDeviceSize offsets[] = {0};
-        
+
+        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
+
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
@@ -347,6 +330,8 @@ namespace mc
         
         VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
         VkDeviceSize offsets[] = {0};
+
+        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
         
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -710,7 +695,81 @@ namespace mc
         if (vkCreateRenderPass(g_state.device, &renderPassInfo, g_state.allocator, &g_state.renderPass) != VK_SUCCESS)
             throw std::runtime_error("failed to create render pass!");
     }
-    
+
+    void RendererAPI::CreateDescriptorSetLayout()
+    {        
+        VkDescriptorSetLayoutBinding uboLayoutBinding = {
+            .binding = 0,
+            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .pImmutableSamplers = nullptr,
+        };
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = 1,
+            .pBindings = &uboLayoutBinding,
+        };
+
+        if (vkCreateDescriptorSetLayout(g_state.device, &layoutInfo, g_state.allocator, &g_state.descriptorSetLayout) != VK_SUCCESS)
+            throw std::runtime_error("failed to create descriptor set layout!");
+    }
+
+    void RendererAPI::CreateDescriptorPool()
+    {
+        VkDescriptorPoolSize poolSize = {
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .descriptorCount = static_cast<uint32_t>(FrameData::MAX_FRAMES_IN_FLIGHT),
+        };
+
+        VkDescriptorPoolCreateInfo poolInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .maxSets = static_cast<u32>(FrameData::MAX_FRAMES_IN_FLIGHT),
+            .poolSizeCount = 1,
+            .pPoolSizes = &poolSize,
+        };
+
+        if (vkCreateDescriptorPool(g_state.device, &poolInfo, g_state.allocator, &g_state.descriptorPool) != VK_SUCCESS)
+            throw std::runtime_error("failed to create descriptor pool!");
+    }
+
+    void RendererAPI::CreateDescriptorSets()
+    {
+        std::vector layouts(FrameData::MAX_FRAMES_IN_FLIGHT, g_state.descriptorSetLayout);
+        VkDescriptorSetAllocateInfo allocInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_state.descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = layouts.data(),
+        };
+
+        for(FrameData& frame : g_state.frames){
+            if (vkAllocateDescriptorSets(g_state.device, &allocInfo, &frame.uboDescriptor) != VK_SUCCESS)
+                throw std::runtime_error("failed to allocate descriptor sets!");
+
+            VkDescriptorBufferInfo bufferInfo = {
+                .buffer = frame.uboBuffer.buffer,
+                .offset = 0,
+                .range = sizeof(UniformBufferObject),
+            };
+
+            VkWriteDescriptorSet descriptorWrite = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = frame.uboDescriptor,
+                .dstBinding = 0,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                .pImageInfo = nullptr,
+                .pBufferInfo = &bufferInfo,
+                .pTexelBufferView = nullptr,
+            };
+            
+            vkUpdateDescriptorSets(g_state.device, 1, &descriptorWrite, 0, nullptr);
+        }
+    }
+
     void RendererAPI::CreateGraphicsPipeline()
     {
         // Graphics Pipeline
@@ -837,8 +896,8 @@ namespace mc
         
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-            .setLayoutCount = 0, // Optional
-            .pSetLayouts = nullptr, // Optional
+            .setLayoutCount = 1,
+            .pSetLayouts = &g_state.descriptorSetLayout,
             .pushConstantRangeCount = 0, // Optional
             .pPushConstantRanges = nullptr, // Optional
         };
@@ -971,7 +1030,17 @@ namespace mc
         if(vkCreateFence(g_state.device, &uploadFenceInfo, g_state.allocator, &g_state.uploadContext.uploadFence) != VK_SUCCESS)
             throw std::runtime_error("failed to create fence!");
     }
-    
+
+    void RendererAPI::CreateUniformBuffers()
+    {
+        u64 bufferSize = sizeof(UniformBufferObject);
+        for (FrameData& frame : g_state.frames) {
+            frame.uboBuffer = CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+            vkMapMemory(g_state.device, frame.uboBuffer.memory, 0, bufferSize, 0, &frame.uboBuffer.mappedMemory);
+        }
+    }
+
     void RendererAPI::RecreateSwapchain()
     {
         int width = 0, height = 0;
@@ -1045,209 +1114,6 @@ namespace mc
 
         return buffer;
     }
-
-    namespace details
-    {
-        VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
-            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-            VkDebugUtilsMessageTypeFlagsEXT messageType,
-            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-            void* pUserData) {
-
-            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
-            return VK_FALSE;
-        }
-        
-        bool CheckValidationLayerSupport() {
-            uint32_t layerCount;
-            vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-            std::vector<VkLayerProperties> availableLayers(layerCount);
-            vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-            
-            for (auto layerName : VALIDATION_LAYERS) {
-                bool layerFound = false;
-
-                for (const auto& layerProperties : availableLayers)
-                    if (strcmp(layerName, layerProperties.layerName) == 0) {
-                        layerFound = true;
-                        break;
-                    }
-
-                if (!layerFound)
-                    return false;
-            }
-
-            return true;
-        }
-        
-        std::vector<const char*> GetRequiredExtensions() {
-            uint32_t glfwExtensionCount = 0;
-            const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-            std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-            if (g_enableValidationLayers) {
-                extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-            }
-
-            return extensions;
-        }
-
-        SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice device)
-        {
-            SwapchainSupportDetails swapchain;
-
-            vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, g_state.surface, &swapchain.capabilities);
-
-            u32 formatCount;
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, nullptr);
-            
-            swapchain.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, swapchain.formats.data());
-
-            u32 presentModeCount;
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, nullptr);
-
-            swapchain.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, swapchain.presentModes.data());
-            return swapchain;
-        }
-
-        
-        int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain)
-        {
-            int score = 0;
-            VkPhysicalDeviceProperties deviceProperties;
-            VkPhysicalDeviceFeatures deviceFeatures;
-            vkGetPhysicalDeviceProperties(device, &deviceProperties);
-            vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-            // Device features requirements
-            {
-                if(!deviceFeatures.geometryShader)
-                    return -1;
-            }
-
-            // Device Extension requirements
-            {
-                uint32_t extensionCount;
-                vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-                std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-                vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-                std::set<std::string> requiredExtensions = {DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end()};
-                
-                for(const auto& [extensionName, specVersion] : availableExtensions)
-                    requiredExtensions.erase(extensionName);
-
-                if(!requiredExtensions.empty())
-                    return -1;
-            }
-            
-            // Device Queue Families requirements
-            {
-                uint32_t queueFamilyCount = 0;
-                vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-                std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-                vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-                u32 i = 0;
-                for (const auto& queueFamily : queueFamilies) {
-                    if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                        indices.graphicsFamily = i;
-                
-                    VkBool32 presentSupport = false;
-                    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, g_state.surface, &presentSupport);
-                    if (presentSupport)
-                        indices.presentFamily = i;
-
-                    if (indices.IsComplete())
-                        break;
-                    
-                    i++;
-                }
-
-                if(!indices.IsComplete())
-                    return -1;
-            }
-
-            // Required Swapchain Support
-            swapchain = GetSwapchainSupportDetails(device);
-                
-            if (swapchain.formats.empty())
-                return -1;
-
-            if (swapchain.presentModes.empty())
-                return -1;
-            
-            switch (deviceProperties.deviceType)
-            { 
-                case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-                case VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM:
-                    score += 1;
-                    break;
-                
-                case VK_PHYSICAL_DEVICE_TYPE_CPU:
-                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-                    score += 10;
-                    break;
-                
-                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-                    score += 20;
-                    break;
-            }
-            
-            return score;
-        }
-
-        std::vector<byte> ReadFile(const std::string& filename) {
-            std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-            if (!file.is_open())
-                throw std::runtime_error("failed to open file!");
-
-            size_t fileSize = file.tellg();
-            std::vector<byte> buffer(fileSize);
-            
-            file.seekg(0);
-            file.read(static_cast<char*>(static_cast<void*>(buffer.data())), fileSize);
-
-            file.close();
-
-            return buffer;
-        }
-
-        VkShaderModule CreateShaderModule(const std::vector<byte>& code) {
-            VkShaderModuleCreateInfo createInfo = {
-                .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-                .codeSize = code.size(),
-                .pCode = reinterpret_cast<const uint32_t*>(code.data()),
-            };
-
-            VkShaderModule shaderModule;
-            if (vkCreateShaderModule(g_state.device, &createInfo, g_state.allocator, &shaderModule) != VK_SUCCESS)
-                throw std::runtime_error("failed to create shader module!");
-
-            return shaderModule;
-        }
-
-        uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-        {
-            VkPhysicalDeviceMemoryProperties memProperties;
-            vkGetPhysicalDeviceMemoryProperties(g_state.physicalDevice, &memProperties);
-            
-            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-                if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                    return i;
-                }
-            }
-
-            throw std::runtime_error("failed to find suitable memory type!");
-        }
-    }
 }
+
+#include "RendererUtils.inl"

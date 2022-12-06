@@ -40,6 +40,8 @@ namespace mc {
     struct AllocatedBuffer {
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
+
+        void* mappedMemory = nullptr;
     };
 
     struct AllocatedImage {
@@ -47,9 +49,14 @@ namespace mc {
         // VmaAllocation allocation;
     };
 
-    struct MeshPushConstants {
+    struct UniformBufferObject {
         float4 data;
-        Mat4 renderMatrix;
+        Mat4 proj;
+        Mat4 view;
+    };
+
+    struct MeshPushConstants {
+        Mat4 model;
     };
 
 
@@ -76,5 +83,23 @@ namespace mc {
         VkFence uploadFence;
         VkCommandPool commandPool;	
         VkCommandBuffer commandBuffer;
+    };
+
+    struct QueueFamilyIndices
+    {
+        u32 graphicsFamily = ~0u;
+        u32 presentFamily = ~0u;
+
+        bool IsComplete() const
+        {
+            return graphicsFamily != ~0u &&
+                   presentFamily != ~0u;
+        }
+    };
+
+    struct SwapchainSupportDetails {
+        VkSurfaceCapabilitiesKHR capabilities{};
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
     };
 }

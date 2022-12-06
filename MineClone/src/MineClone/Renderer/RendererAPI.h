@@ -11,7 +11,7 @@ namespace mc
         static void Deinit();
         static void Wait();
 
-        static void BeginFrame();
+        static void BeginFrame(float deltaTime, const Mat4& projection, const Mat4& view);
         static void EndFrame();
         
         static void Resize(u32 width, u32 height);
@@ -42,11 +42,16 @@ namespace mc
         static void CreateSwapchain();
         static void CreateImageViews();
         static void CreateRenderPass();
+        static void CreateDescriptorSetLayout();
+        static void CreateDescriptorPool();
+        static void CreateDescriptorSets();
         static void CreateGraphicsPipeline();
         static void CreateFramebuffers();
         static void CreateCommandPool();
         static void CreateCommandBuffers();
         static void CreateSyncObjects();
+
+        static void CreateUniformBuffers();
         
         static void RecreateSwapchain();
         static void CleanupSwapchain();
