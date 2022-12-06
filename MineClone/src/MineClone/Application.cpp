@@ -22,28 +22,28 @@ namespace mc
 
     static const std::vector<u32> INDICES = {
         //Top
-        2, 6, 7, 
-        2, 7, 3,
+        7, 2, 6,
+        3, 2, 7,
 
         //Bottom
-        0, 4, 5,
-        0, 5, 1,
+        4, 0, 5,
+        5, 0, 1,
 
         //Left
-        0, 2, 6,
-        0, 6, 4,
+        2, 0, 6,
+        6, 0, 4,
 
         //Right
-        1, 7, 3,
-        1, 5, 7,
+        7, 1, 3,
+        5, 1, 7,
 
         //Front
-        0, 3, 2,
-        0, 1, 3,
+        3, 0, 2,
+        1, 0, 3,
 
         //Back
-        4, 6, 7,
-        4, 7, 5,
+        6, 4, 7,
+        7, 4, 5,
     };
 
     AllocatedBuffer g_vertexBuffer;
@@ -62,8 +62,8 @@ namespace mc
         
         m_window = CreateScope<Window>(1280, 720, name);
         m_camera = CreateScope<Camera>(60.f, 1280, 720);
-        m_camera->SetPos({0, -1, 10});
-        m_camera->SetRot({30, 0});
+        m_camera->SetPos({0, 1, 10});
+        m_camera->SetRot({-30, 0});
         
         RendererAPI::Init();
 

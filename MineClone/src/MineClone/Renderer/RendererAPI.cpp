@@ -15,7 +15,8 @@ namespace mc
     };
 
     const std::array DEVICE_EXTENSIONS = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE1_EXTENSION_NAME,
     };
 
 #if NDEBUG
@@ -225,9 +226,9 @@ namespace mc
 
         VkViewport viewport = {
             .x = 0.0f,
-            .y = 0.0f,
+            .y = static_cast<float>(g_state.swapchainExtent.height),
             .width = static_cast<float>(g_state.swapchainExtent.width),
-            .height = static_cast<float>(g_state.swapchainExtent.height),
+            .height = -static_cast<float>(g_state.swapchainExtent.height),
             .minDepth = 0.0f,
             .maxDepth = 1.0f,
         };
