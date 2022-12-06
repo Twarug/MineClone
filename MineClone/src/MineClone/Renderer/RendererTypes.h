@@ -37,6 +37,38 @@ namespace mc {
         }
     };
     
+    struct Vertex3D
+    {
+        float3 pos;
+        float3 color;
+
+        static VkVertexInputBindingDescription GetBindingDescription()
+        {
+            return {
+                .binding = 0,
+                .stride = sizeof(Vertex3D),
+                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+            };
+        }
+
+        static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
+            return {{
+                {
+                    .location = 0,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32B32_SFLOAT,
+                    .offset = offsetof(Vertex3D, pos),
+                },
+                {
+                    .location = 1,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32B32_SFLOAT,
+                    .offset = offsetof(Vertex3D, color),
+                },
+            }};
+        }
+    };
+    
     struct AllocatedBuffer {
         VkBuffer buffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;

@@ -173,8 +173,7 @@ namespace mc
     }
 
 
-    void RendererAPI::BeginFrame(float deltaTime, const Camera& camera)
-    {
+    void RendererAPI::BeginFrame(float deltaTime, const Camera& camera) {
         FrameData& frame = g_state.GetCurrentFrame();
         vkWaitForFences(g_state.device, 1, &frame.renderFence, true, std::numeric_limits<u64>::max());
         vkResetFences(g_state.device, 1, &frame.renderFence);
@@ -805,8 +804,8 @@ namespace mc
             .pDynamicStates = dynamicStates.data(),
         };
 
-        auto bindingDescription = Vertex2D::GetBindingDescription();
-        auto attributeDescriptions = Vertex2D::GetAttributeDescriptions();
+        auto bindingDescription = Vertex3D::GetBindingDescription();
+        auto attributeDescriptions = Vertex3D::GetAttributeDescriptions();
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,

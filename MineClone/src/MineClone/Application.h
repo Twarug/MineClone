@@ -19,7 +19,6 @@ namespace mc
 
         void Close() { m_isRunning = false; }
 
-
         Window& GetMainWindow() { return *m_window; }
         const Window& GetMainWindow() const { return *m_window; }
         

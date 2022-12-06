@@ -6,12 +6,12 @@
 namespace mc
 {
     Camera::Camera(float fov, u32 width, u32 height)
-        : m_fov(fov), m_proj(glm::perspective(glm::radians(fov), width/(float)height, 0.1f, 1000.f))
+        : m_fov(fov), m_proj(glm::perspective(glm::radians(fov), (float)width/(float)height, 0.1f, 1000.f))
     {}
     
     void Camera::Update(float deltaTime)
     {
-        m_pos.z -= deltaTime;
+        // m_pos.z -= deltaTime;
     }
     
     Mat4 Camera::GetView() const
