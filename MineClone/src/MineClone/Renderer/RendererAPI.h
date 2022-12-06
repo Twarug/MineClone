@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "Camera.h"
 #include "RendererTypes.h"
 
 namespace mc
@@ -11,7 +12,7 @@ namespace mc
         static void Deinit();
         static void Wait();
 
-        static void BeginFrame(float deltaTime, const Mat4& projection, const Mat4& view);
+        static void BeginFrame(float deltaTime, const Camera& camera);
         static void EndFrame();
         
         static void Resize(u32 width, u32 height);

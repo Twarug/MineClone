@@ -26,8 +26,6 @@ namespace mc
         : name(name), m_isRunning(false)
     {
         s_instance = this;
-
-        //m_view = lookAt(float3(2.0f, 2.0f, 2.0f), float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f));
     }
 
     
@@ -36,7 +34,9 @@ namespace mc
         m_isRunning = true;
         
         m_window = CreateScope<Window>(1280, 720, name);
-        m_projection = glm::perspective(glm::radians(45.0f), 1280 / 720.f, 0.1f, 1000.0f);
+        m_camera = CreateScope<Camera>(60.f, 1280, 720);
+        m_camera->SetPos({0, 0, 20});
+        
         RendererAPI::Init();
 
         g_vertexBuffer = RendererAPI::CreateVertexBuffer(std::span(VERTICES));
@@ -46,7 +46,7 @@ namespace mc
         {
             Update();
 
-            RendererAPI::BeginFrame(m_deltaTime, m_projection, m_view);
+            RendererAPI::BeginFrame(m_deltaTime, *m_camera);
             Render();
             RendererAPI::EndFrame();
         }
@@ -61,7 +61,6 @@ namespace mc
 
     void Application::Update()
     {
-        m_window->Update();
         {
             using namespace std::chrono;
             auto now = high_resolution_clock::now();
@@ -70,10 +69,8 @@ namespace mc
 
             // printf("%f\n", .01f *m_deltaTime);
         }
-        
-        static float3 pos{0, 0, -20};
-        pos.z -= 1.f * m_deltaTime;
-        m_view = translate(Mat4(1), pos);
+        m_window->Update();
+        m_camera->Update(m_deltaTime);
     }
     
     void Application::Render()
@@ -90,8 +87,7 @@ namespace mc
     void Application::OnEvent(WindowResizeEvent& ev)
     {
         RendererAPI::Resize(ev.GetWidth(), ev.GetHeight());
-        
-        m_projection = glm::perspective(glm::radians(45.0f), (float)ev.GetWidth() / (float) ev.GetHeight(), 0.1f, 1000.0f);
+        m_camera->OnResize(ev.GetWidth(), ev.GetHeight());
     }
 
 }

@@ -5,7 +5,6 @@
 #include "RendererUtils.h"
 #include "MineClone/Application.h"
 
-
 #include "vulkan/vulkan.h"
 #include "GLFW/glfw3.h"
 
@@ -159,7 +158,7 @@ namespace mc
 
         if(g_enableValidationLayers)
         {
-            auto func = PFN_vkDestroyDebugUtilsMessengerEXT(vkGetInstanceProcAddr(g_state.instance, "vkDestroyDebugUtilsMessengerEXT"));
+            auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(g_state.instance, "vkDestroyDebugUtilsMessengerEXT");
             if (func != nullptr)
                 func(g_state.instance, g_state.debugMessenger, g_state.allocator);
         }
@@ -174,7 +173,7 @@ namespace mc
     }
 
 
-    void RendererAPI::BeginFrame(float deltaTime, const Mat4& projection, const Mat4& view)
+    void RendererAPI::BeginFrame(float deltaTime, const Camera& camera)
     {
         FrameData& frame = g_state.GetCurrentFrame();
         vkWaitForFences(g_state.device, 1, &frame.renderFence, true, std::numeric_limits<u64>::max());
@@ -192,7 +191,7 @@ namespace mc
 
         static float time = 0;
         time += deltaTime;
-        UniformBufferObject ubo{{deltaTime, time, 0, 0}, projection, view};
+        UniformBufferObject ubo{{deltaTime, time, 0, 0}, camera.GetProjection(), camera.GetView()};
         memcpy(frame.uboBuffer.mappedMemory, &ubo, sizeof(ubo));
 
         vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
