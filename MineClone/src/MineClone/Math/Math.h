@@ -33,6 +33,10 @@ namespace mc
     using float3 = Vec3<f32>;
     using float4 = Vec4<f32>;
 
+    using double2 = Vec2<f64>;
+    using double3 = Vec3<f64>;
+    using double4 = Vec4<f64>;   
+
     using int2 = Vec2<i32>;
     using int3 = Vec3<i32>;
     using int4 = Vec4<i32>;
