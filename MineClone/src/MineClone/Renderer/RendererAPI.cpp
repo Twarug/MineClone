@@ -238,6 +238,8 @@ namespace mc
             .extent = g_state.swapchainExtent,
         };
         vkCmdSetScissor(frame.commandBuffer, 0, 1, &scissor);
+        
+        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
     }
 
     void RendererAPI::EndFrame()
@@ -309,27 +311,33 @@ namespace mc
         buffer = AllocatedBuffer();
     }
 
-    void RendererAPI::Draw(const AllocatedBuffer& vertexBuffer)
+    void RendererAPI::Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer)
     {
         FrameData& frame = g_state.GetCurrentFrame();
+
+        MeshPushConstants pushConstants { transform };
         
         VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
         VkDeviceSize offsets[] = {0};
-
-        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
-
+        
+        vkCmdPushConstants(frame.commandBuffer, g_state.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
+
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
     
-    void RendererAPI::Draw(const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount)
+    void RendererAPI::Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount)
     {
         FrameData& frame = g_state.GetCurrentFrame();
+        
+        MeshPushConstants pushConstants { transform };
         
         VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
         VkDeviceSize offsets[] = {0};
 
-        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
+        // vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
+        
+        vkCmdPushConstants(frame.commandBuffer, g_state.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
         
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -891,13 +899,19 @@ namespace mc
                 0.0f, 0.0f, 0.0f, 0.0f,
             }, // Optional
         };
+
+        VkPushConstantRange pushConstant = {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0,
+            .size = sizeof(MeshPushConstants),
+        };
         
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .setLayoutCount = 1,
             .pSetLayouts = &g_state.descriptorSetLayout,
-            .pushConstantRangeCount = 0, // Optional
-            .pPushConstantRanges = nullptr, // Optional
+            .pushConstantRangeCount = 1,
+            .pPushConstantRanges = &pushConstant,
         };
 
         if (vkCreatePipelineLayout(g_state.device, &pipelineLayoutInfo, g_state.allocator, &g_state.pipelineLayout) != VK_SUCCESS)

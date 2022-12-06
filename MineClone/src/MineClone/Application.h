@@ -11,7 +11,7 @@ namespace mc
     {
     public:
         std::string name;
-    
+
     public:
         explicit Application(std::string_view name);
         
@@ -41,6 +41,8 @@ namespace mc
 
         Scope<Window> m_window;
         Scope<Camera> m_camera;
+        
+        Mat4 m_cubeTransform {1};
         
     private:
         inline static Application* s_instance = nullptr;

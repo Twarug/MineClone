@@ -99,11 +99,14 @@ namespace mc
         }
         m_window->Update();
         m_camera->Update(m_deltaTime);
+
+        static float yaw = 0.f;
+        m_cubeTransform = glm::rotate(Mat4{1}, glm::radians(yaw += 5.f * m_deltaTime), {0, 1, 0});
     }
     
     void Application::Render()
-    {
-        RendererAPI::Draw(g_vertexBuffer, g_indexBuffer, INDICES.size());
+    {        
+        RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
     }
 
     void Application::OnEvent(WindowCloseEvent& ev)

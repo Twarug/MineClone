@@ -26,8 +26,8 @@ namespace mc
 
         static void DeleteBuffer(AllocatedBuffer& buffer);
         
-        static void Draw(const AllocatedBuffer& vertexBuffer);
-        static void Draw(const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount);
+        static void Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer);
+        static void Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount);
 
         static void CopyBuffer(const AllocatedBuffer& srcBuffer, const AllocatedBuffer& dstBuffer, u64 size);
 
