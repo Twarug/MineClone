@@ -53,6 +53,9 @@ namespace mc
         : name(name), m_isRunning(false)
     {
         s_instance = this;
+
+        m_cubeTransform = glm::translate(Mat4{1}, {-2.5f, 0, 0});
+        m_cube2Transform = glm::translate(Mat4{1}, {2.5f, 0, 0});
     }
 
     
@@ -61,7 +64,7 @@ namespace mc
         m_isRunning = true;
         
         m_window = CreateScope<Window>(1280, 720, name);
-        m_camera = CreateScope<Camera>(60.f, 1280, 720);
+        m_camera = CreateScope<FirstPersonCamera>(60.f, 1280, 720);
         m_camera->SetPos({0, 1, 10});
         m_camera->SetRot({-30, 0});
         
@@ -100,13 +103,13 @@ namespace mc
         m_window->Update();
         m_camera->Update(m_deltaTime);
 
-        static float yaw = 0.f;
-        m_cubeTransform = glm::rotate(Mat4{1}, glm::radians(yaw += 5.f * m_deltaTime), {0, 1, 0});
+        m_cubeTransform *= glm::rotate(Mat4{1}, glm::radians(10.f * m_deltaTime), {0, 1, 0});
     }
     
     void Application::Render()
     {        
         RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
+        RendererAPI::Draw(m_cube2Transform, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
     }
 
     void Application::OnEvent(WindowCloseEvent& ev)

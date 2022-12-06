@@ -1,8 +1,8 @@
 ﻿#pragma once
 
+#include "FirstPersonCamera.h"
 #include "MineClone/Window.h"
 
-#include "MineClone/Renderer/Camera.h"
 #include "MineClone/Event/WindowEvents.h"
 
 namespace mc
@@ -40,9 +40,10 @@ namespace mc
         std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint = std::chrono::high_resolution_clock::now();
 
         Scope<Window> m_window;
-        Scope<Camera> m_camera;
+        Scope<FirstPersonCamera> m_camera;
         
         Mat4 m_cubeTransform {1};
+        Mat4 m_cube2Transform {1};
         
     private:
         inline static Application* s_instance = nullptr;
