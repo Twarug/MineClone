@@ -5,6 +5,8 @@
 
 #include "Event/EventHandler.h"
 #include "Event/WindowEvents.h"
+#include "Event/MouseEvents.h"
+#include "Event/KeyboradEvents.h"
 
 namespace mc
 {
@@ -40,6 +42,63 @@ namespace mc
             Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
             WindowCloseEvent ev{*win};
             EventHandler<WindowCloseEvent>::Invoke(ev);
+        });
+
+        glfwSetKeyCallback(window, [](GLFWwindow*, int key, int scancode, int action, int mods) {
+            switch (action)
+            {
+                case GLFW_PRESS:
+                {
+                    KeyPressedEvent ev((KeyCode)key, 0);
+                    EventHandler<KeyPressedEvent>::Invoke(ev);
+                    break;
+                }
+                case GLFW_RELEASE:
+                {
+                    KeyReleasedEvent ev((KeyCode)key);
+                    EventHandler<KeyReleasedEvent>::Invoke(ev);
+                    break;
+                }
+                case GLFW_REPEAT:
+                {
+                    KeyPressedEvent ev((KeyCode)key, true);
+                    EventHandler<KeyPressedEvent>::Invoke(ev);
+                    break;
+                }
+            }
+        });
+        
+        glfwSetCharCallback(window, [](GLFWwindow*, unsigned int keycode) {
+            KeyTypedEvent ev((KeyCode)keycode);
+            EventHandler<KeyTypedEvent>::Invoke(ev);
+        });
+
+        glfwSetMouseButtonCallback(window, [](GLFWwindow*, int button, int action, int mods) {
+            switch (action)
+            {
+                case GLFW_PRESS:
+                    {
+                        MouseButtonPressedEvent ev((MouseCode)button);
+                        EventHandler<MouseButtonPressedEvent>::Invoke(ev);
+                        break;
+                    }
+                    case GLFW_RELEASE:
+                    {
+                        MouseButtonReleasedEvent ev((MouseCode)button);
+                        EventHandler<MouseButtonReleasedEvent>::Invoke(ev);
+                        break;
+                    }
+                }
+            });
+
+        glfwSetScrollCallback(window, [](GLFWwindow*, double xOffset, double yOffset) {
+            MouseScrolledEvent ev({xOffset, yOffset});
+            EventHandler<MouseScrolledEvent>::Invoke(ev);
+        });
+
+        glfwSetCursorPosCallback(window, [](GLFWwindow*, double xPos, double yPos) {
+            MouseMovedEvent ev({xPos, yPos});
+            EventHandler<MouseMovedEvent>::Invoke(ev);
         });
     }
 

@@ -6,6 +6,7 @@
 namespace mc
 {
     static constexpr float SPEED = 5.f; 
+    static constexpr float SENSITIVITY = .1f; 
     
     FirstPersonCamera::FirstPersonCamera(float fov, u32 width, u32 height)
         : Camera(fov, width, height)
@@ -13,6 +14,20 @@ namespace mc
 
     void FirstPersonCamera::Update(float deltaTime)
     {
+        auto mouse = Input::GetButton(MouseCode::Button0);
+        int2 mousePos = Input::GetMousePos();
+        if(mouse.down)
+            m_prevMousePos = mousePos;
+        
+        if(mouse.pressed)
+        {
+            float2 mouseDelta = float2(mousePos - m_prevMousePos).yx * SENSITIVITY;
+            m_prevMousePos = mousePos;
+
+            // mouseDelta.y *= -1.f;
+            m_rot -= mouseDelta;
+        }   
+        
         if(Input::GetKey(KeyCode::Q).pressed)
             m_rot.y += 10.f * SPEED * deltaTime;
         else if(Input::GetKey(KeyCode::E).pressed)

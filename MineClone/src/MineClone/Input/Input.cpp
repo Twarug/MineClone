@@ -6,26 +6,19 @@
 
 namespace mc
 {
-    Key Input::GetKey(KeyCode keyCode)
-    {
-        auto* window = static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow());
-        auto state = glfwGetKey(window, static_cast<int32_t>(keyCode));
-        return {
-            false,
-            state == GLFW_PRESS,
-            false,
-        };
+    static Input g_input{};
+
+    static std::array<Key, (u64)KeyCode::_Count> g_keys;
+    static std::array<Button, (u64)MouseCode::_Count> g_mouseButtons;
+
+    static float2 g_scrollOffset;
+    
+    Key Input::GetKey(KeyCode keyCode) {
+        return g_keys[(u16)keyCode];
     }
 
-    Button Input::GetButton(MouseCode mouseCode)
-    {
-        auto* window = static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow());
-        auto state = glfwGetMouseButton(window, static_cast<int32_t>(mouseCode));
-        return {
-            false,
-            state == GLFW_PRESS,
-            false,
-        };
+    Button Input::GetButton(MouseCode mouseCode) {
+        return g_mouseButtons[(u16)mouseCode];
     }
 
     int2 Input::GetMousePos()
@@ -38,6 +31,62 @@ namespace mc
 
     float2 Input::GetScrollDelta()
     {
-        return {};
+        return g_scrollOffset;
+    }
+
+    void Input::OnEvent(AppUpdateEvent& ev)
+    {
+        auto* window = static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow());
+
+        g_scrollOffset = {};
+        
+        for(u32 i = 0; i < g_keys.size(); i++)
+        {
+            Key& key = g_keys[i];
+            bool pressed = glfwGetKey(window, i);
+
+            if(key.down)
+                key.down = false;
+
+            if(key.up)
+                key.up = false;
+            
+            if(pressed)
+            {
+                if (!key.pressed)
+                    key.down = true;
+            }
+            else if(key.pressed)
+                key.up = true;
+
+            key.pressed = pressed;
+        }
+        
+        for(u32 i = 0; i < g_mouseButtons.size(); i++)
+        {
+            Button& button = g_mouseButtons[i];
+            bool pressed = glfwGetMouseButton(window, i);
+
+            if(button.down)
+                button.down = false;
+
+            if(button.up)
+                button.up = false;
+            
+            if(pressed)
+            {
+                if (!button.pressed)
+                    button.down = true;
+            }
+            else if(button.pressed)
+                button.up = true;
+
+            button.pressed = pressed;
+        }
+    }
+
+    void Input::OnEvent(MouseScrolledEvent& ev)
+    {
+        g_scrollOffset = ev.GetOffset();
     }
 }

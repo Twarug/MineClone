@@ -2,7 +2,7 @@
 
 namespace mc
 {
-    enum class KeyCode : uint16_t
+    enum class KeyCode : u16
 	{
 		// From glfw3.h
 		Space               = 32,
@@ -134,7 +134,10 @@ namespace mc
 		RightControl        = 345,
 		RightAlt            = 346,
 		RightSuper          = 347,
-		Menu                = 348
+		Menu                = 348,
+
+		// ReSharper disable once CppInconsistentNaming
+		_Count,
 	};
 
 }

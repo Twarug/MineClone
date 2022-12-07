@@ -1,6 +1,7 @@
 ﻿#include "mcpch.h"
 #include "Application.h"
 
+#include "Event/ApplicationEvents.h"
 #include "Renderer/RendererAPI.h"
 #include "Renderer/RendererTypes.h"
 
@@ -100,9 +101,14 @@ namespace mc
 
             // printf("%f\n", .01f *m_deltaTime);
         }
-        m_window->Update();
-        m_camera->Update(m_deltaTime);
 
+        m_window->Update();
+        {
+            AppUpdateEvent ev{m_deltaTime};
+            EventHandler<AppUpdateEvent>::Invoke(ev);
+        }
+        
+        m_camera->Update(m_deltaTime);
         m_cubeTransform *= glm::rotate(Mat4{1}, glm::radians(10.f * m_deltaTime), {0, 1, 0});
     }
     

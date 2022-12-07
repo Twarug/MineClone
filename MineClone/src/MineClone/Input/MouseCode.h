@@ -2,7 +2,7 @@
 
 namespace mc
 {
-    enum class MouseCode : uint16_t
+    enum class MouseCode : u16
     {
         // From glfw3.h
         Button0                = 0,
@@ -17,6 +17,9 @@ namespace mc
         ButtonLast             = Button7,
         ButtonLeft             = Button0,
         ButtonRight            = Button1,
-        ButtonMiddle           = Button2
+        ButtonMiddle           = Button2,
+        
+        // ReSharper disable once CppInconsistentNaming
+        _Count,
     };
 }

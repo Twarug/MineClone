@@ -9,5 +9,8 @@ namespace mc
         FirstPersonCamera(float fov, u32 width, u32 height);
 
         void Update(float deltaTime);
+
+    private:
+        int2 m_prevMousePos{};
     };
 }
