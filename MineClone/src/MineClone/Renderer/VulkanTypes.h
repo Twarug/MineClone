@@ -95,6 +95,9 @@ namespace mc
         uint32_t currentFrame = 0;
         std::array<FrameData, FrameData::MAX_FRAMES_IN_FLIGHT> frames;
 
+        VkImageView depthView;
+        Ref<AllocatedImage> depthTexture;
+        
         bool swapchainNeedsRecreation = false;
         uint2 currentWindowSize;
 
@@ -104,6 +107,7 @@ namespace mc
         VkAllocationCallbacks* allocator = nullptr;
         std::vector<VkExtensionProperties> extensions;
 
+        
         UploadContext uploadContext;
 
     public:

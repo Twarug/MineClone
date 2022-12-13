@@ -27,12 +27,12 @@ namespace mc
 
 
         static Ref<Texture> LoadTexture(const std::string& filePath);
-        static Ref<Texture> CreateTexture(u32 width, u32 height);
+        static Ref<Texture> CreateTexture(u32 width, u32 height, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         static void DeleteTexture(Ref<Texture> texture);
 
 
-        static Ref<AllocatedImage> CreateImage(u32 width, u32 height);
+        static Ref<AllocatedImage> CreateImage(u32 width, u32 height, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
         
         static void DeleteImage(Ref<AllocatedImage> image);
         
@@ -74,8 +74,9 @@ namespace mc
         static void CreateSyncObjects();
 
         static void CreateUniformBuffers();
-        static void CreateImage(Ref<AllocatedImage> image, u32 width, u32 height);
+        static void CreateImage(Ref<AllocatedImage> image, u32 width, u32 height, VkFormat format, VkImageUsageFlags usage);
         
+        static void CreateDepthBuffer();
         static void RecreateSwapchain();
         static void CleanupSwapchain();
 

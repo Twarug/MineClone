@@ -175,6 +175,19 @@ namespace mc
             .alphaToOneEnable = VK_FALSE, // Optional
         };
 
+        VkPipelineDepthStencilStateCreateInfo depthStencil = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+            .depthTestEnable = VK_TRUE,
+            .depthWriteEnable = VK_TRUE,
+            .depthCompareOp = VK_COMPARE_OP_LESS,
+            .depthBoundsTestEnable = VK_FALSE,
+            .stencilTestEnable = VK_FALSE,
+            .front = {}, // Optional
+            .back = {}, // Optional
+            .minDepthBounds = 0.0f,// Optional
+            .maxDepthBounds = 1.0f, // Optional
+        };
+        
         VkPipelineColorBlendAttachmentState colorBlendAttachment{
             .blendEnable = VK_TRUE,
             .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
@@ -223,7 +236,7 @@ namespace mc
             .pViewportState = &viewportState,
             .pRasterizationState = &rasterizer,
             .pMultisampleState = &multisampling,
-            .pDepthStencilState = nullptr, // Optional
+            .pDepthStencilState = &depthStencil, // Optional
             .pColorBlendState = &colorBlending,
             .pDynamicState = &dynamicState,
             .layout = pipelineLayout,

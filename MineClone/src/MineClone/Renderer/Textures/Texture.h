@@ -5,8 +5,8 @@ namespace mc
 {
     class AllocatedImage {
     public:
-        VkExtent3D extent;
         VkFormat format;
+        VkExtent3D extent;
         
         VkImage image;
         VkDeviceMemory memory;
