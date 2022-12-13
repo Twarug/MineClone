@@ -25,15 +25,15 @@ namespace mc
             : KeyEvent(keycode), m_repeated(repeated) {}
 
         bool GetRepeatCount() const { return m_repeated; }
-        
+
         const char* GetName() const override { return "KeyPressedEvent"; }
 
         std::string ToString() const override {
             std::stringstream ss;
-            ss << "KeyPressedEvent: " << (u16)GetKeyCode() << " (" << m_repeated << " repeats)";
+            ss << "KeyPressedEvent: " << static_cast<u16>(GetKeyCode()) << " (" << m_repeated << " repeats)";
             return ss.str();
         }
-        
+
     private:
         bool m_repeated;
     };
@@ -48,7 +48,7 @@ namespace mc
 
         std::string ToString() const override {
             std::stringstream ss;
-            ss << "KeyPressedEvent: " << (u16)GetKeyCode();
+            ss << "KeyPressedEvent: " << static_cast<u16>(GetKeyCode());
             return ss.str();
         }
     };
@@ -63,7 +63,7 @@ namespace mc
 
         std::string ToString() const override {
             std::stringstream ss;
-            ss << "KeyPressedEvent: " << (u16)GetKeyCode();
+            ss << "KeyPressedEvent: " << static_cast<u16>(GetKeyCode());
             return ss.str();
         }
     };

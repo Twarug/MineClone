@@ -17,9 +17,10 @@ namespace mc
         AppUpdateEvent(float deltaTime)
             : m_deltaTime(deltaTime) {}
 
-        float GetDeltaTime() const { return  m_deltaTime; }
-        
+        float GetDeltaTime() const { return m_deltaTime; }
+
         const char* GetName() const override { return "AppUpdateEvent"; }
+
     private:
         float m_deltaTime;
     };
@@ -28,7 +29,7 @@ namespace mc
     {
     public:
         AppRenderEvent() = default;
-        
+
         const char* GetName() const override { return "AppRenderEvent"; }
     };
 }

@@ -17,16 +17,17 @@ namespace mc
         u32 GetY() const { return m_pos.y; }
 
         const char* GetName() const override { return "MouseMoveEvent"; }
+
         std::string ToString() const override {
             std::stringstream ss;
             ss << "MouseMoveEvent: " << m_pos.x << ", " << m_pos.y;
-            return  ss.str();
+            return ss.str();
         }
 
     private:
         uint2 m_pos;
     };
-	
+
     class MouseScrolledEvent : public Event
     {
     public:
@@ -73,7 +74,7 @@ namespace mc
 
         std::string ToString() const override {
             std::stringstream ss;
-            ss << "MouseButtonPressedEvent: " << (u16)GetMouseButton();
+            ss << "MouseButtonPressedEvent: " << static_cast<u16>(GetMouseButton());
             return ss.str();
         }
     };
@@ -83,12 +84,12 @@ namespace mc
     public:
         MouseButtonReleasedEvent(MouseCode button)
             : MouseButtonEvent(button) {}
-        
+
         const char* GetName() const override { return "MouseButtonReleasedEvent"; }
 
         std::string ToString() const override {
             std::stringstream ss;
-            ss << "MouseButtonReleasedEvent: " << (u16)GetMouseButton();
+            ss << "MouseButtonReleasedEvent: " << static_cast<u16>(GetMouseButton());
             return ss.str();
         }
     };

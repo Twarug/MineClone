@@ -5,7 +5,7 @@
 namespace mc
 {
     class Window;
-    
+
     // Window Events
     class WindowCloseEvent : public Event
     {
@@ -31,10 +31,11 @@ namespace mc
 
 
         const char* GetName() const override { return "WindowResizeEvent"; }
+
         std::string ToString() const override {
             std::stringstream ss;
             ss << "WindowResizeEvent: " << m_width << ", " << m_height;
-            return  ss.str();
+            return ss.str();
         }
 
     private:

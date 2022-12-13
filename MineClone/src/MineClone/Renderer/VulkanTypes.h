@@ -21,10 +21,11 @@ namespace mc
 #else
     inline bool g_enableValidationLayers = false;
 #endif
-    
-    struct UploadContext {
+
+    struct UploadContext
+    {
         VkFence uploadFence;
-        VkCommandPool commandPool;	
+        VkCommandPool commandPool;
         VkCommandBuffer commandBuffer;
     };
 
@@ -33,39 +34,41 @@ namespace mc
         u32 graphicsFamily = ~0u;
         u32 presentFamily = ~0u;
 
-        bool IsComplete() const
-        {
+        bool IsComplete() const {
             return graphicsFamily != ~0u &&
-                   presentFamily != ~0u;
+                presentFamily != ~0u;
         }
     };
 
-    struct SwapchainSupportDetails {
+    struct SwapchainSupportDetails
+    {
         VkSurfaceCapabilitiesKHR capabilities{};
         std::vector<VkSurfaceFormatKHR> formats;
         std::vector<VkPresentModeKHR> presentModes;
-    };    
-    
+    };
+
     struct FrameData
     {
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-        
-	    VkSemaphore presentSemaphore = VK_NULL_HANDLE;
+
+        VkSemaphore presentSemaphore = VK_NULL_HANDLE;
         VkSemaphore renderSemaphore = VK_NULL_HANDLE;
         VkFence renderFence = VK_NULL_HANDLE;
-        
+
         u32 currentImageIndex = 0;
-        
+
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
         Ref<AllocatedBuffer> uboBuffer;
-        VkDescriptorSet descriptor = VK_NULL_HANDLE;
+
+
+        // VkDescriptorSet descriptor = VK_NULL_HANDLE;
 
         // AllocatedBuffer objectBuffer{};
         // VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
     };
-    
+
     struct GlobalState
     {
         VkInstance instance;
@@ -83,11 +86,11 @@ namespace mc
         VkExtent2D swapchainExtent;
 
         VkDescriptorPool descriptorPool;
-        
+
         VkRenderPass renderPass;
         // VkPipelineLayout pipelineLayout;
         // VkPipeline graphicsPipeline;
-        
+
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainImageViews;
         std::vector<VkFramebuffer> swapchainFramebuffers;
@@ -97,22 +100,20 @@ namespace mc
 
         VkImageView depthView;
         Ref<AllocatedImage> depthTexture;
-        
+
         bool swapchainNeedsRecreation = false;
         uint2 currentWindowSize;
 
         QueueFamilyIndices indices;
         SwapchainSupportDetails swapchainSupportDetails;
-       
+
         VkAllocationCallbacks* allocator = nullptr;
         std::vector<VkExtensionProperties> extensions;
 
-        
         UploadContext uploadContext;
 
     public:
-        FrameData& GetCurrentFrame()
-        {
+        FrameData& GetCurrentFrame() {
             return frames[currentFrame];
         }
     };

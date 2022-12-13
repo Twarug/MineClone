@@ -14,22 +14,22 @@ namespace mc
 
     public:
         explicit Application(std::string_view name);
-        
+
         void Run();
 
         void Close() { m_isRunning = false; }
 
         Window& GetMainWindow() { return *m_window; }
         const Window& GetMainWindow() const { return *m_window; }
-        
+
     private:
         void Update();
         void Render();
-        
+
     protected:
         void OnEvent(WindowCloseEvent& ev) override;
         void OnEvent(WindowResizeEvent& ev) override;
-        
+
     public:
         static Application& Get() { return *s_instance; }
 
@@ -41,10 +41,10 @@ namespace mc
 
         Scope<Window> m_window;
         Scope<FirstPersonCamera> m_camera;
-        
-        Mat4 m_cubeTransform {1};
-        Mat4 m_cube2Transform {1};
-        
+
+        Mat4 m_cubeTransform{1};
+        Mat4 m_cube2Transform{1};
+
     private:
         inline static Application* s_instance = nullptr;
     };

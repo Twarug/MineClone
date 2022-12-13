@@ -6,11 +6,10 @@
 #include "VulkanUtils.h"
 
 namespace mc
-{   
-    Ref<Material> Material::Create(const std::string& name)
-    {
+{
+    Ref<Material> Material::Create(const std::string& name) {
         auto& state = RendererAPI::GetState();
-        
+
         VkDescriptorSetLayout descriptorSetLayout;
         VkDescriptorSet descriptorSet;
         VkPipeline pipeline;
@@ -23,7 +22,7 @@ namespace mc
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
             .pImmutableSamplers = nullptr,
         };
-        
+
         VkDescriptorSetLayoutBinding samplerLayoutBinding = {
             .binding = 1,
             .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
@@ -31,15 +30,15 @@ namespace mc
             .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
             .pImmutableSamplers = nullptr,
         };
-        
+
         std::array bindings = {uboLayoutBinding, samplerLayoutBinding};
-        VkDescriptorSetLayoutCreateInfo layoutInfo {
+        VkDescriptorSetLayoutCreateInfo layoutInfo{
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .bindingCount = (u32)bindings.size(),
+            .bindingCount = static_cast<u32>(bindings.size()),
             .pBindings = bindings.data(),
         };
-        
-        if (vkCreateDescriptorSetLayout(state.device, &layoutInfo, state.allocator, &descriptorSetLayout) != VK_SUCCESS)
+
+        if(vkCreateDescriptorSetLayout(state.device, &layoutInfo, state.allocator, &descriptorSetLayout) != VK_SUCCESS)
             throw std::runtime_error("failed to create descriptor set layout!");
 
         std::vector layouts(FrameData::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
@@ -49,17 +48,17 @@ namespace mc
             .descriptorSetCount = 1,
             .pSetLayouts = layouts.data(),
         };
-        
+
         for(FrameData& frame : state.frames) {
-            if (vkAllocateDescriptorSets(state.device, &allocInfo, &descriptorSet) != VK_SUCCESS)
+            if(vkAllocateDescriptorSets(state.device, &allocInfo, &descriptorSet) != VK_SUCCESS)
                 throw std::runtime_error("failed to allocate descriptor sets!");
-            
+
             VkDescriptorBufferInfo bufferInfo = {
                 .buffer = frame.uboBuffer->buffer,
                 .offset = 0,
                 .range = sizeof(UniformBufferObject),
             };
-        
+
             VkWriteDescriptorSet descriptorWrite = {
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
                 .dstSet = descriptorSet,
@@ -71,14 +70,14 @@ namespace mc
                 .pBufferInfo = &bufferInfo,
                 .pTexelBufferView = nullptr,
             };
-            
+
             vkUpdateDescriptorSets(state.device, 1, &descriptorWrite, 0, nullptr);
         }
 
         // Graphics Pipeline
         auto vertShaderCode = details::VulkanUtils::ReadFile("assets/shaders/shader.vert.spv");
         auto fragShaderCode = details::VulkanUtils::ReadFile("assets/shaders/shader.frag.spv");
-        
+
         VkShaderModule vertShaderModule = details::VulkanUtils::CreateShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = details::VulkanUtils::CreateShaderModule(fragShaderCode);
 
@@ -95,9 +94,9 @@ namespace mc
             .module = fragShaderModule,
             .pName = "main",
         };
-        
+
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-        
+
         std::vector dynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
             VK_DYNAMIC_STATE_SCISSOR
@@ -153,15 +152,18 @@ namespace mc
             .depthClampEnable = VK_FALSE,
             .rasterizerDiscardEnable = VK_FALSE,
             .polygonMode = VK_POLYGON_MODE_FILL,
-            
+
             .cullMode = VK_CULL_MODE_BACK_BIT,
             .frontFace = VK_FRONT_FACE_CLOCKWISE,
-            
+
             .depthBiasEnable = VK_FALSE,
-            .depthBiasConstantFactor = 0.0f, // Optional
-            .depthBiasClamp = 0.0f, // Optional
-            .depthBiasSlopeFactor = 0.0f, // Optional
-            
+            .depthBiasConstantFactor = 0.0f,
+            // Optional
+            .depthBiasClamp = 0.0f,
+            // Optional
+            .depthBiasSlopeFactor = 0.0f,
+            // Optional
+
             .lineWidth = 1.0f,
         };
 
@@ -169,10 +171,14 @@ namespace mc
             .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
             .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
             .sampleShadingEnable = VK_FALSE,
-            .minSampleShading = 1.0f, // Optional
-            .pSampleMask = nullptr, // Optional
-            .alphaToCoverageEnable = VK_FALSE, // Optional
-            .alphaToOneEnable = VK_FALSE, // Optional
+            .minSampleShading = 1.0f,
+            // Optional
+            .pSampleMask = nullptr,
+            // Optional
+            .alphaToCoverageEnable = VK_FALSE,
+            // Optional
+            .alphaToOneEnable = VK_FALSE,
+            // Optional
         };
 
         VkPipelineDepthStencilStateCreateInfo depthStencil = {
@@ -182,12 +188,16 @@ namespace mc
             .depthCompareOp = VK_COMPARE_OP_LESS,
             .depthBoundsTestEnable = VK_FALSE,
             .stencilTestEnable = VK_FALSE,
-            .front = {}, // Optional
-            .back = {}, // Optional
-            .minDepthBounds = 0.0f,// Optional
-            .maxDepthBounds = 1.0f, // Optional
+            .front = {},
+            // Optional
+            .back = {},
+            // Optional
+            .minDepthBounds = 0.0f,
+            // Optional
+            .maxDepthBounds = 1.0f,
+            // Optional
         };
-        
+
         VkPipelineColorBlendAttachmentState colorBlendAttachment{
             .blendEnable = VK_TRUE,
             .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
@@ -202,12 +212,12 @@ namespace mc
         VkPipelineColorBlendStateCreateInfo colorBlending = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
             .logicOpEnable = VK_FALSE,
-            .logicOp = VK_LOGIC_OP_COPY, // Optional
+            .logicOp = VK_LOGIC_OP_COPY,
+            // Optional
             .attachmentCount = 1,
             .pAttachments = &colorBlendAttachment,
-            .blendConstants = {
-                0.0f, 0.0f, 0.0f, 0.0f,
-            }, // Optional
+            .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f},
+            // Optional
         };
 
         VkPushConstantRange pushConstant = {
@@ -215,7 +225,7 @@ namespace mc
             .offset = 0,
             .size = sizeof(MeshPushConstants),
         };
-        
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .setLayoutCount = 1,
@@ -224,7 +234,7 @@ namespace mc
             .pPushConstantRanges = &pushConstant,
         };
 
-        if (vkCreatePipelineLayout(state.device, &pipelineLayoutInfo, state.allocator, &pipelineLayout) != VK_SUCCESS)
+        if(vkCreatePipelineLayout(state.device, &pipelineLayoutInfo, state.allocator, &pipelineLayout) != VK_SUCCESS)
             throw std::runtime_error("failed to create pipeline layout!");
 
         VkGraphicsPipelineCreateInfo pipelineInfo = {
@@ -236,53 +246,52 @@ namespace mc
             .pViewportState = &viewportState,
             .pRasterizationState = &rasterizer,
             .pMultisampleState = &multisampling,
-            .pDepthStencilState = &depthStencil, // Optional
+            .pDepthStencilState = &depthStencil,
+            // Optional
             .pColorBlendState = &colorBlending,
             .pDynamicState = &dynamicState,
             .layout = pipelineLayout,
             .renderPass = state.renderPass,
             .subpass = 0,
-            .basePipelineHandle = VK_NULL_HANDLE, // Optional
-            .basePipelineIndex = -1, // Optional
+            .basePipelineHandle = VK_NULL_HANDLE,
+            // Optional
+            .basePipelineIndex = -1,
+            // Optional
         };
 
-        if (vkCreateGraphicsPipelines(state.device, VK_NULL_HANDLE, 1, &pipelineInfo, state.allocator, &pipeline) != VK_SUCCESS)
+        if(vkCreateGraphicsPipelines(state.device, VK_NULL_HANDLE, 1, &pipelineInfo, state.allocator, &pipeline) != VK_SUCCESS)
             throw std::runtime_error("failed to create graphics pipeline!");
-        
+
         vkDestroyShaderModule(state.device, fragShaderModule, state.allocator);
         vkDestroyShaderModule(state.device, vertShaderModule, state.allocator);
-        
+
         return Ref<Material>(new Material(descriptorSetLayout, descriptorSet, pipeline, pipelineLayout));
         // return CreateRef<Material>(descriptorSetLayout, descriptorSet, pipeline, pipelineLayout);
     }
 
-    Material::Material(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet descriptorSet, VkPipeline pipeline,
-        VkPipelineLayout pipelineLayout): m_descriptorSetLayout(descriptorSetLayout), m_descriptorSet(descriptorSet), m_pipeline(pipeline), m_pipelineLayout(pipelineLayout)
-    {}
+    Material::Material(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet descriptorSet, VkPipeline pipeline, VkPipelineLayout pipelineLayout)
+        : m_descriptorSetLayout(descriptorSetLayout), m_descriptorSet(descriptorSet), m_pipeline(pipeline), m_pipelineLayout(pipelineLayout) {}
 
-    Material::~Material()
-    {
+    Material::~Material() {
         auto& state = RendererAPI::GetState();
-        
+
         vkDestroyDescriptorSetLayout(state.device, m_descriptorSetLayout, state.allocator);
-        
-        vkDestroyPipeline(state.device, m_pipeline, state.allocator);        
+
+        vkDestroyPipeline(state.device, m_pipeline, state.allocator);
         vkDestroyPipelineLayout(state.device, m_pipelineLayout, state.allocator);
     }
 
-    void Material::Bind()
-    {
+    void Material::Bind() {
         auto& state = RendererAPI::GetState();
         auto& frame = state.GetCurrentFrame();
-        
+
         vkCmdBindPipeline(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
         vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
     }
 
-    void Material::SetTexture(Ref<Texture> texture)
-    {
+    void Material::SetTexture(Ref<Texture> texture) {
         auto& state = RendererAPI::GetState();
-        
+
         VkDescriptorImageInfo imageInfo = {
             .sampler = texture->sampler,
             .imageView = texture->imageView,

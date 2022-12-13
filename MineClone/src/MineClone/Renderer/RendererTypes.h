@@ -7,15 +7,14 @@
 #include "Material.h"
 #include "Buffer.h"
 
-namespace mc {
-
+namespace mc
+{
     struct Vertex2D
     {
         float2 pos;
         float3 color;
 
-        static VkVertexInputBindingDescription GetBindingDescription()
-        {
+        static VkVertexInputBindingDescription GetBindingDescription() {
             return {
                 .binding = 0,
                 .stride = sizeof(Vertex2D),
@@ -24,23 +23,25 @@ namespace mc {
         }
 
         static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
-            return {{
+            return {
                 {
-                    .location = 0,
-                    .binding = 0,
-                    .format = VK_FORMAT_R32G32_SFLOAT,
-                    .offset = offsetof(Vertex2D, pos),
-                },
-                {
-                    .location = 1,
-                    .binding = 0,
-                    .format = VK_FORMAT_R32G32B32_SFLOAT,
-                    .offset = offsetof(Vertex2D, color),
-                },
-            }};
+                    {
+                        .location = 0,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32_SFLOAT,
+                        .offset = offsetof(Vertex2D, pos),
+                    },
+                    {
+                        .location = 1,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(Vertex2D, color),
+                    },
+                }
+            };
         }
     };
-    
+
     struct Vertex3D
     {
         float3 pos;
@@ -48,8 +49,7 @@ namespace mc {
         float3 color;
         float2 uv;
 
-        static VkVertexInputBindingDescription GetBindingDescription()
-        {
+        static VkVertexInputBindingDescription GetBindingDescription() {
             return {
                 .binding = 0,
                 .stride = sizeof(Vertex3D),
@@ -58,26 +58,26 @@ namespace mc {
         }
 
         static auto GetAttributeDescriptions() {
-            return std::array {
-                VkVertexInputAttributeDescription {
+            return std::array{
+                VkVertexInputAttributeDescription{
                     .location = 0,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex3D, pos),
                 },
-                VkVertexInputAttributeDescription {
+                VkVertexInputAttributeDescription{
                     .location = 1,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex3D, normal),
                 },
-                VkVertexInputAttributeDescription {
+                VkVertexInputAttributeDescription{
                     .location = 2,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex3D, color),
                 },
-                VkVertexInputAttributeDescription {
+                VkVertexInputAttributeDescription{
                     .location = 3,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32_SFLOAT,
@@ -87,17 +87,20 @@ namespace mc {
         }
     };
 
-    struct UniformBufferObject {
+    struct UniformBufferObject
+    {
         float4 data;
         Mat4 proj;
         Mat4 view;
     };
 
-    struct MeshPushConstants {
+    struct MeshPushConstants
+    {
         Mat4 model;
     };
-    
-    struct RenderObject {
+
+    struct RenderObject
+    {
         // Ref<Mesh> mesh;
 
         Ref<Material> material;

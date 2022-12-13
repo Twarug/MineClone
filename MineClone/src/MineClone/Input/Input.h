@@ -32,7 +32,7 @@ namespace mc
         bool pressed;
         bool up;
     };
-    
+
     struct Button
     {
         bool down;

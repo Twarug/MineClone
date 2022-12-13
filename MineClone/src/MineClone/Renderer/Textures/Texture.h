@@ -3,18 +3,19 @@
 
 namespace mc
 {
-    class AllocatedImage {
+    class AllocatedImage
+    {
     public:
         VkFormat format;
         VkExtent3D extent;
-        
+
         VkImage image;
         VkDeviceMemory memory;
     };
 
     class Texture : public AllocatedImage
     {
-    public:            
+    public:
 
     private:
         VkImageView imageView;
