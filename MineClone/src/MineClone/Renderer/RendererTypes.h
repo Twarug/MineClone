@@ -5,6 +5,7 @@
 
 #include "Textures/Texture.h"
 #include "Material.h"
+#include "Buffer.h"
 
 namespace mc {
 
@@ -85,13 +86,6 @@ namespace mc {
             };
         }
     };
-    
-    struct AllocatedBuffer {
-        VkBuffer buffer = VK_NULL_HANDLE;
-        VkDeviceMemory memory = VK_NULL_HANDLE;
-
-        void* mappedMemory = nullptr;
-    };
 
     struct UniformBufferObject {
         float4 data;
@@ -104,34 +98,10 @@ namespace mc {
     };
     
     struct RenderObject {
-        // Mesh* mesh;
+        // Ref<Mesh> mesh;
 
         Ref<Material> material;
 
         Mat4 transformMatrix;
-    };
-    
-    struct UploadContext {
-        VkFence uploadFence;
-        VkCommandPool commandPool;	
-        VkCommandBuffer commandBuffer;
-    };
-
-    struct QueueFamilyIndices
-    {
-        u32 graphicsFamily = ~0u;
-        u32 presentFamily = ~0u;
-
-        bool IsComplete() const
-        {
-            return graphicsFamily != ~0u &&
-                   presentFamily != ~0u;
-        }
-    };
-
-    struct SwapchainSupportDetails {
-        VkSurfaceCapabilitiesKHR capabilities{};
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> presentModes;
     };
 }

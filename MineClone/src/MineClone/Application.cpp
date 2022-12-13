@@ -80,7 +80,7 @@ namespace mc
 
         g_texture = RendererAPI::LoadTexture("assets/texture.png");
         g_mat = Material::Create("default");
-        // g_mat->SetTexture(g_texture);
+        g_mat->SetTexture(g_texture);
         
         while (m_isRunning)
         {
@@ -92,7 +92,7 @@ namespace mc
         }
 
         RendererAPI::Wait();
-
+        g_mat = nullptr;
         RendererAPI::DeleteTexture(g_texture);
         
         RendererAPI::DeleteBuffer(g_vertexBuffer);
@@ -124,8 +124,9 @@ namespace mc
     
     void Application::Render()
     {        
-        RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
-        RendererAPI::Draw(m_cube2Transform, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
+        g_mat->Bind();
+        RendererAPI::Draw(m_cubeTransform, g_mat, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
+        RendererAPI::Draw(m_cube2Transform, g_mat, g_vertexBuffer, g_indexBuffer, (u32)INDICES.size());
     }
 
     void Application::OnEvent(WindowCloseEvent& ev)

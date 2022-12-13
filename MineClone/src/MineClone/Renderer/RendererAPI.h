@@ -2,13 +2,17 @@
 
 #include "Camera.h"
 #include "RendererTypes.h"
-#include "MineClone/Config.h"
-#include "MineClone/Config.h"
-#include "MineClone/Config.h"
-#include "MineClone/Config.h"
+
 
 namespace mc
 {
+    struct GlobalState;
+
+    namespace details
+    {
+        class VulkanUtils;
+    }
+    
     class RendererAPI
     {
     public:
@@ -40,8 +44,8 @@ namespace mc
 
         static void DeleteBuffer(Ref<AllocatedBuffer> buffer);
         
-        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer);
-        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount);
+        static void Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer);
+        static void Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount);
 
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size);
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
@@ -49,6 +53,8 @@ namespace mc
         static void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
 
     private:
+        static GlobalState& GetState();
+        
         static void CreateInstance();
         static void SetupDebugMessenger();
         static void CreateSurface();
@@ -58,10 +64,10 @@ namespace mc
         static void CreateSwapchain();
         static void CreateImageViews();
         static void CreateRenderPass();
-        static void CreateDescriptorSetLayout();
+        // static void CreateDescriptorSetLayout();
         static void CreateDescriptorPool();
-        static void CreateDescriptorSets();
-        static void CreateGraphicsPipeline();
+        // static void CreateDescriptorSets();
+        // static void CreateGraphicsPipeline();
         static void CreateFramebuffers();
         static void CreateCommandPool();
         static void CreateCommandBuffers();
@@ -77,6 +83,11 @@ namespace mc
                                                  VkMemoryPropertyFlags properties, const void* data);
         static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
                                                  VkMemoryPropertyFlags properties);
+
+        friend details::VulkanUtils;
+        
+        friend class Material;
+        friend class Texture;
     };
 }
 

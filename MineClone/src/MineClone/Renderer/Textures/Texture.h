@@ -5,16 +5,22 @@ namespace mc
 {
     class AllocatedImage {
     public:
+        VkExtent3D extent;
+        VkFormat format;
+        
         VkImage image;
         VkDeviceMemory memory;
-        VkExtent3D extent;
     };
 
     class Texture : public AllocatedImage
     {
     public:            
+
+    private:
         VkImageView imageView;
         VkSampler sampler;
-        VkDescriptorSet descriptor;
+
+        friend class Material;
+        friend class RendererAPI;
     };
 }

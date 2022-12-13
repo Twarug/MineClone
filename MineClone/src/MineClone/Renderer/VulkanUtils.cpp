@@ -1,10 +1,15 @@
-﻿#pragma once
+﻿#include "mcpch.h"
+#include "VulkanUtils.h"
 
+#include "RendererAPI.h"
 #include "GLFW/glfw3.h"
 
-namespace details
-{
-    VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+#include "VulkanTypes.h"
+
+namespace mc::details
+{   
+    
+    VKAPI_ATTR VkBool32 VKAPI_CALL VulkanUtils::DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -15,7 +20,7 @@ namespace details
         return VK_FALSE;
     }
     
-    bool CheckValidationLayerSupport() {
+    bool VulkanUtils::CheckValidationLayerSupport() {
         uint32_t layerCount;
         vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -38,7 +43,7 @@ namespace details
         return true;
     }
     
-    std::vector<const char*> GetRequiredExtensions() {
+    std::vector<const char*> VulkanUtils::GetRequiredExtensions() {
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
@@ -50,29 +55,33 @@ namespace details
         return extensions;
     }
 
-    SwapchainSupportDetails GetSwapchainSupportDetails(VkPhysicalDevice device)
+    SwapchainSupportDetails VulkanUtils::GetSwapchainSupportDetails(VkPhysicalDevice device)
     {
+        auto& state = RendererAPI::GetState();
+        
         SwapchainSupportDetails swapchain;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, g_state.surface, &swapchain.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, state.surface, &swapchain.capabilities);
 
         u32 formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, state.surface, &formatCount, nullptr);
         
         swapchain.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, g_state.surface, &formatCount, swapchain.formats.data());
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, state.surface, &formatCount, swapchain.formats.data());
 
         u32 presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, state.surface, &presentModeCount, nullptr);
 
         swapchain.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, g_state.surface, &presentModeCount, swapchain.presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, state.surface, &presentModeCount, swapchain.presentModes.data());
         return swapchain;
     }
 
     
-    int GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain)
+    int VulkanUtils::GetDeviceScore(VkPhysicalDevice device, QueueFamilyIndices& indices, SwapchainSupportDetails& swapchain)
     {
+        auto& state = RendererAPI::GetState();
+        
         int score = 0;
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
@@ -119,7 +128,7 @@ namespace details
                     indices.graphicsFamily = i;
             
                 VkBool32 presentSupport = false;
-                vkGetPhysicalDeviceSurfaceSupportKHR(device, i, g_state.surface, &presentSupport);
+                vkGetPhysicalDeviceSurfaceSupportKHR(device, i, state.surface, &presentSupport);
                 if (presentSupport)
                     indices.presentFamily = i;
 
@@ -163,7 +172,7 @@ namespace details
         return score;
     }
 
-    std::vector<byte> ReadFile(const std::string& filename) {
+    std::vector<byte> VulkanUtils::ReadFile(const std::string& filename) {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
         if (!file.is_open())
@@ -180,7 +189,9 @@ namespace details
         return buffer;
     }
 
-    VkShaderModule CreateShaderModule(const std::vector<byte>& code) {
+    VkShaderModule VulkanUtils::CreateShaderModule(const std::vector<byte>& code) {
+        auto& state = RendererAPI::GetState();
+        
         VkShaderModuleCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
             .codeSize = code.size(),
@@ -188,16 +199,18 @@ namespace details
         };
 
         VkShaderModule shaderModule;
-        if (vkCreateShaderModule(g_state.device, &createInfo, g_state.allocator, &shaderModule) != VK_SUCCESS)
+        if (vkCreateShaderModule(state.device, &createInfo, state.allocator, &shaderModule) != VK_SUCCESS)
             throw std::runtime_error("failed to create shader module!");
 
         return shaderModule;
     }
 
-    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+    uint32_t VulkanUtils::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
     {
+        auto& state = RendererAPI::GetState();
+        
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(g_state.physicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(state.physicalDevice, &memProperties);
         
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
             if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
