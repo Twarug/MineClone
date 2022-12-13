@@ -49,7 +49,7 @@ namespace mc
             {
                 case GLFW_PRESS:
                 {
-                    KeyPressedEvent ev((KeyCode)key, 0);
+                    KeyPressedEvent ev((KeyCode)key, false);
                     EventHandler<KeyPressedEvent>::Invoke(ev);
                     break;
                 }
@@ -65,6 +65,7 @@ namespace mc
                     EventHandler<KeyPressedEvent>::Invoke(ev);
                     break;
                 }
+                default: ;
             }
         });
         
@@ -77,19 +78,20 @@ namespace mc
             switch (action)
             {
                 case GLFW_PRESS:
-                    {
-                        MouseButtonPressedEvent ev((MouseCode)button);
-                        EventHandler<MouseButtonPressedEvent>::Invoke(ev);
-                        break;
-                    }
-                    case GLFW_RELEASE:
-                    {
-                        MouseButtonReleasedEvent ev((MouseCode)button);
-                        EventHandler<MouseButtonReleasedEvent>::Invoke(ev);
-                        break;
-                    }
+                {
+                    MouseButtonPressedEvent ev((MouseCode)button);
+                    EventHandler<MouseButtonPressedEvent>::Invoke(ev);
+                    break;
                 }
-            });
+                case GLFW_RELEASE:
+                {
+                    MouseButtonReleasedEvent ev((MouseCode)button);
+                    EventHandler<MouseButtonReleasedEvent>::Invoke(ev);
+                    break;
+                }
+                default: ;
+            }
+        });
 
         glfwSetScrollCallback(window, [](GLFWwindow*, double xOffset, double yOffset) {
             MouseScrolledEvent ev({xOffset, yOffset});

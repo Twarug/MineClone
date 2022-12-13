@@ -5,7 +5,7 @@
 namespace mc
 {
     template<typename Vertex>
-    AllocatedBuffer RendererAPI::CreateVertexBuffer(std::span<Vertex> data)
+    Ref<AllocatedBuffer> RendererAPI::CreateVertexBuffer(std::span<Vertex> data)
     {
         u64 size = sizeof(Vertex) * data.size();
 
@@ -21,7 +21,7 @@ namespace mc
     }
 
     template <std::integral Index>
-    AllocatedBuffer RendererAPI::CreateIndexBuffer(std::span<Index> data)
+    Ref<AllocatedBuffer> RendererAPI::CreateIndexBuffer(std::span<Index> data)
     {
         u64 size = sizeof(Index) * data.size();
 

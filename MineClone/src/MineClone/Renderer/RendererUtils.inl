@@ -1,9 +1,8 @@
 ﻿#pragma once
-#include "RendererUtils.h"
 
 #include "GLFW/glfw3.h"
 
-namespace mc::details
+namespace details
 {
     VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
@@ -45,9 +44,8 @@ namespace mc::details
 
         std::vector extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if (g_enableValidationLayers) {
+        if (g_enableValidationLayers)
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
 
         return extensions;
     }
@@ -85,6 +83,9 @@ namespace mc::details
         {
             if(!deviceFeatures.geometryShader)
                 return -1;
+
+            if(deviceFeatures.samplerAnisotropy)
+                score += 1;
         }
 
         // Device Extension requirements
@@ -198,11 +199,9 @@ namespace mc::details
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(g_state.physicalDevice, &memProperties);
         
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
                 return i;
-            }
-        }
 
         throw std::runtime_error("failed to find suitable memory type!");
     }

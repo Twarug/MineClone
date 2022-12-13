@@ -3,6 +3,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Textures/Texture.h"
+#include "Material.h"
+
 namespace mc {
 
     struct Vertex2D
@@ -40,7 +43,9 @@ namespace mc {
     struct Vertex3D
     {
         float3 pos;
+        float3 normal;
         float3 color;
+        float2 uv;
 
         static VkVertexInputBindingDescription GetBindingDescription()
         {
@@ -51,21 +56,33 @@ namespace mc {
             };
         }
 
-        static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions() {
-            return {{
-                {
+        static auto GetAttributeDescriptions() {
+            return std::array {
+                VkVertexInputAttributeDescription {
                     .location = 0,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex3D, pos),
                 },
-                {
+                VkVertexInputAttributeDescription {
                     .location = 1,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32B32_SFLOAT,
+                    .offset = offsetof(Vertex3D, normal),
+                },
+                VkVertexInputAttributeDescription {
+                    .location = 2,
                     .binding = 0,
                     .format = VK_FORMAT_R32G32B32_SFLOAT,
                     .offset = offsetof(Vertex3D, color),
                 },
-            }};
+                VkVertexInputAttributeDescription {
+                    .location = 3,
+                    .binding = 0,
+                    .format = VK_FORMAT_R32G32_SFLOAT,
+                    .offset = offsetof(Vertex3D, uv),
+                },
+            };
         }
     };
     
@@ -74,11 +91,6 @@ namespace mc {
         VkDeviceMemory memory = VK_NULL_HANDLE;
 
         void* mappedMemory = nullptr;
-    };
-
-    struct AllocatedImage {
-        VkImage image;
-        // VmaAllocation allocation;
     };
 
     struct UniformBufferObject {
@@ -90,23 +102,11 @@ namespace mc {
     struct MeshPushConstants {
         Mat4 model;
     };
-
-
-    struct Material {
-        VkDescriptorSet textureSet = VK_NULL_HANDLE;
-        VkPipeline pipeline = VK_NULL_HANDLE;
-        VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
-    };
-
-    struct Texture {
-        AllocatedImage image;
-        VkImageView imageView;
-    };
-
+    
     struct RenderObject {
         // Mesh* mesh;
 
-        Material* material;
+        Ref<Material> material;
 
         Mat4 transformMatrix;
     };

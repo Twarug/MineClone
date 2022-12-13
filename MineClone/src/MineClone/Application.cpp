@@ -9,16 +9,16 @@
 
 namespace mc
 {
-    static const std::vector<Vertex3D> VERTICES = {
-        {{-1, -1,  1}, {1.0f, 0.0f, 0.0f}}, //0
-        {{ 1, -1,  1}, {0.0f, 1.0f, 0.0f}}, //1
-        {{-1,  1,  1}, {0.0f, 0.0f, 1.0f}}, //2
-        {{ 1,  1,  1}, {1.0f, 1.0f, 1.0f}}, //3
+    static const std::vector VERTICES = {
+        Vertex3D{{-1, -1,  1}, {}, {1.0f, 0.0f, 0.0f}, {0, 0}}, //0
+        Vertex3D{{ 1, -1,  1}, {}, {0.0f, 1.0f, 0.0f}, {1, 0}}, //1
+        Vertex3D{{-1,  1,  1}, {}, {0.0f, 0.0f, 1.0f}, {0, 1}}, //2
+        Vertex3D{{ 1,  1,  1}, {}, {1.0f, 1.0f, 1.0f}, {1, 1}}, //3
 
-        {{-1, -1, -1}, {1.0f, 0.0f, 0.0f}}, //4
-        {{ 1, -1, -1}, {0.0f, 1.0f, 0.0f}}, //5
-        {{-1,  1, -1}, {0.0f, 0.0f, 1.0f}}, //6
-        {{ 1,  1, -1}, {1.0f, 1.0f, 1.0f}}, //7
+        Vertex3D{{-1, -1, -1}, {}, {1.0f, 0.0f, 0.0f}, {0, 0}}, //4
+        Vertex3D{{ 1, -1, -1}, {}, {0.0f, 1.0f, 0.0f}, {1, 0}}, //5
+        Vertex3D{{-1,  1, -1}, {}, {0.0f, 0.0f, 1.0f}, {0, 1}}, //6
+        Vertex3D{{ 1,  1, -1}, {}, {1.0f, 1.0f, 1.0f}, {1, 1}}, //7
     };
 
     static const std::vector<u32> INDICES = {
@@ -47,8 +47,12 @@ namespace mc
         7, 4, 5,
     };
 
-    AllocatedBuffer g_vertexBuffer;
-    AllocatedBuffer g_indexBuffer;
+    Ref<AllocatedBuffer> g_vertexBuffer;
+    Ref<AllocatedBuffer> g_indexBuffer;
+
+    Ref<Texture> g_texture;
+
+    Ref<Material> g_mat;
     
     Application::Application(std::string_view name)
         : name(name), m_isRunning(false)
@@ -73,6 +77,10 @@ namespace mc
 
         g_vertexBuffer = RendererAPI::CreateVertexBuffer(std::span(VERTICES));
         g_indexBuffer = RendererAPI::CreateIndexBuffer(std::span(INDICES));
+
+        g_texture = RendererAPI::LoadTexture("assets/texture.png");
+        g_mat = Material::Create("default");
+        // g_mat->SetTexture(g_texture);
         
         while (m_isRunning)
         {
@@ -84,6 +92,8 @@ namespace mc
         }
 
         RendererAPI::Wait();
+
+        RendererAPI::DeleteTexture(g_texture);
         
         RendererAPI::DeleteBuffer(g_vertexBuffer);
         RendererAPI::DeleteBuffer(g_indexBuffer);

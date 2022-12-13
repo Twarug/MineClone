@@ -2,11 +2,12 @@
 #include "RendererAPI.h"
 
 #include "RendererTypes.h"
-#include "RendererUtils.h"
 #include "MineClone/Application.h"
 
-#include "vulkan/vulkan.h"
-#include "GLFW/glfw3.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#include <vulkan/vulkan.h>
+#include <GLFW/glfw3.h>
 
 namespace mc
 {
@@ -17,6 +18,7 @@ namespace mc
     const std::array DEVICE_EXTENSIONS = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_MAINTENANCE1_EXTENSION_NAME,
+        VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
     };
 
 #if NDEBUG
@@ -39,12 +41,9 @@ namespace mc
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
-        AllocatedBuffer uboBuffer;
-        VkDescriptorSet uboDescriptor = VK_NULL_HANDLE;
+        Ref<AllocatedBuffer> uboBuffer;
+        VkDescriptorSet descriptor = VK_NULL_HANDLE;
 
-        // AllocatedBuffer cameraBuffer{};
-        // VkDescriptorSet globalDescriptor = VK_NULL_HANDLE;
-        //
         // AllocatedBuffer objectBuffer{};
         // VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
     };
@@ -97,6 +96,8 @@ namespace mc
         }
     };
     static inline GlobalState g_state{};
+
+    #include "RendererUtils.inl"
 
     void RendererAPI::Init()
     {
@@ -192,7 +193,7 @@ namespace mc
         static float time = 0;
         time += deltaTime;
         UniformBufferObject ubo{{deltaTime, time, 0, 0}, camera.GetProjection(), camera.GetView()};
-        memcpy(frame.uboBuffer.mappedMemory, &ubo, sizeof(ubo));
+        memcpy(frame.uboBuffer->mappedMemory, &ubo, sizeof(ubo));
 
         vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
 
@@ -240,7 +241,7 @@ namespace mc
         };
         vkCmdSetScissor(frame.commandBuffer, 0, 1, &scissor);
         
-        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
+        vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.descriptor, 0, nullptr);
     }
 
     void RendererAPI::EndFrame()
@@ -304,21 +305,159 @@ namespace mc
         g_state.swapchainNeedsRecreation = true;
     }
 
-    void RendererAPI::DeleteBuffer(AllocatedBuffer& buffer)
-    {        
-        vkDestroyBuffer(g_state.device, buffer.buffer, g_state.allocator);
-        vkFreeMemory(g_state.device, buffer.memory, g_state.allocator);
+    Ref<Texture> RendererAPI::LoadTexture(const std::string& filePath)
+    {
+        i32 width, height, texChannels;
 
-        buffer = AllocatedBuffer();
+        stbi_set_flip_vertically_on_load(true);
+        byte* pixels = stbi_load(filePath.c_str(), &width, &height, &texChannels, STBI_rgb_alpha);
+        u64 imageSize = (u64)width * height * 4;
+
+        if (!pixels)
+            throw std::runtime_error("failed to load texture image!");
+
+        Ref<Texture> texture = CreateTexture(width, height);
+        Ref<AllocatedBuffer> stageBuffer = CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+        void* data;
+        vkMapMemory(g_state.device, stageBuffer->memory, 0, imageSize, 0, &data);
+        memcpy(data, pixels, imageSize);
+        vkUnmapMemory(g_state.device, stageBuffer->memory);
+        
+        CopyBuffer(stageBuffer, texture, imageSize);
+
+        DeleteBuffer(stageBuffer);
+
+        stbi_image_free(pixels);
+        
+        return texture;
     }
 
-    void RendererAPI::Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer)
+    Ref<Texture> RendererAPI::CreateTexture(u32 width, u32 height)
+    {
+        Ref<Texture> texture = CreateRef<Texture>();
+
+        CreateImage(texture, width, height);
+
+        VkImageViewCreateInfo viewInfo = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = texture->image,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_SRGB,
+            .components = {
+                .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                .a = VK_COMPONENT_SWIZZLE_IDENTITY,
+            },
+            .subresourceRange = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount =  1,
+            }
+        };
+
+        if (vkCreateImageView(g_state.device, &viewInfo, g_state.allocator, &texture->imageView) != VK_SUCCESS)
+            throw std::runtime_error("failed to create image views!");
+
+        VkSamplerCreateInfo samplerInfo = {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .magFilter = VK_FILTER_LINEAR,
+            .minFilter = VK_FILTER_LINEAR,
+            .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+            .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+            .mipLodBias = 0.0f,
+            .anisotropyEnable = VK_FALSE,
+            .maxAnisotropy = 0,
+            .compareEnable = VK_FALSE,
+            .compareOp = VK_COMPARE_OP_ALWAYS,
+            .minLod = 0.0f,
+            .maxLod = 0.0f,
+            .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+            .unnormalizedCoordinates = VK_FALSE,
+        };
+        
+        if (vkCreateSampler(g_state.device, &samplerInfo, g_state.allocator, &texture->sampler) != VK_SUCCESS)
+            throw std::runtime_error("failed to create texture sampler!");
+        
+        std::vector layouts(FrameData::MAX_FRAMES_IN_FLIGHT, g_state.descriptorSetLayout);
+        VkDescriptorSetAllocateInfo allocInfo = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = g_state.descriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = layouts.data(),
+        };
+
+        for(FrameData& frame : g_state.frames)
+        {
+            // if (vkAllocateDescriptorSets(g_state.device, &allocInfo, &texture->descriptor) != VK_SUCCESS)
+            //     throw std::runtime_error("failed to allocate descriptor sets!");
+        
+            VkDescriptorImageInfo imageInfo = {
+                .sampler = texture->sampler,
+                .imageView = texture->imageView,
+                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            };
+            VkWriteDescriptorSet descriptorWrite = {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = frame.descriptor,
+                .dstBinding = 1,
+                .dstArrayElement = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                .pImageInfo = &imageInfo,
+            };
+
+            vkUpdateDescriptorSets(g_state.device, 1, &descriptorWrite, 0, nullptr);
+        }
+        return texture;
+    }
+
+    void RendererAPI::DeleteTexture(Ref<Texture> texture)
+    {
+        vkDestroySampler(g_state.device, texture->sampler, g_state.allocator);
+        vkDestroyImageView(g_state.device, texture->imageView, g_state.allocator);
+        DeleteImage(texture);
+
+        texture = {};
+    }
+
+    Ref<AllocatedImage> RendererAPI::CreateImage(u32 width, u32 height)
+    {
+        Ref<AllocatedImage> image = CreateRef<AllocatedImage>();
+
+        CreateImage(image, width, height);
+        
+        return image;
+    }
+
+    void RendererAPI::DeleteImage(Ref<AllocatedImage> image)
+    {
+        vkFreeMemory(g_state.device, image->memory, g_state.allocator);
+        vkDestroyImage(g_state.device, image->image, g_state.allocator);
+
+        image = nullptr;
+    }
+
+    void RendererAPI::DeleteBuffer(Ref<AllocatedBuffer> buffer)
+    {        
+        vkDestroyBuffer(g_state.device, buffer->buffer, g_state.allocator);
+        vkFreeMemory(g_state.device, buffer->memory, g_state.allocator);
+
+        buffer = nullptr;
+    }
+
+    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer)
     {
         FrameData& frame = g_state.GetCurrentFrame();
 
         MeshPushConstants pushConstants { transform };
         
-        VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
+        VkBuffer vertexBuffers[] = {vertexBuffer->buffer};
         VkDeviceSize offsets[] = {0};
         
         vkCmdPushConstants(frame.commandBuffer, g_state.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
@@ -327,13 +466,13 @@ namespace mc
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
     
-    void RendererAPI::Draw(const Mat4& transform, const AllocatedBuffer& vertexBuffer, const AllocatedBuffer& indexBuffer, u32 indicesCount)
+    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount)
     {
         FrameData& frame = g_state.GetCurrentFrame();
         
         MeshPushConstants pushConstants { transform };
         
-        VkBuffer vertexBuffers[] = {vertexBuffer.buffer};
+        VkBuffer vertexBuffers[] = {vertexBuffer->buffer};
         VkDeviceSize offsets[] = {0};
 
         // vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
@@ -341,12 +480,12 @@ namespace mc
         vkCmdPushConstants(frame.commandBuffer, g_state.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
         
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
         
         vkCmdDrawIndexed(frame.commandBuffer, indicesCount, 1, 0, 0, 0);
     }
 
-    void RendererAPI::CopyBuffer(const AllocatedBuffer& srcBuffer, const AllocatedBuffer& dstBuffer, u64 size)
+    void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size)
     {
         ImmediateSubmit([=](VkCommandBuffer cmd) {
             VkBufferCopy copyRegion = {
@@ -355,7 +494,63 @@ namespace mc
                 .size = size,
             };
             
-            vkCmdCopyBuffer(cmd, srcBuffer.buffer, dstBuffer.buffer, 1, &copyRegion);
+            vkCmdCopyBuffer(cmd, srcBuffer->buffer, dstBuffer->buffer, 1, &copyRegion);
+        });
+    }
+
+    void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size)
+    {
+        ImmediateSubmit([=](VkCommandBuffer cmd) {
+            VkImageSubresourceRange range = {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            };
+
+            VkImageMemoryBarrier imageBarrier_toTransfer = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+
+                .srcAccessMask = 0,
+                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+
+                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                .image = dstImage->image,
+                .subresourceRange = range,
+            };
+
+            //barrier the image into the transfer-receive layout
+            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toTransfer);
+
+            VkBufferImageCopy copyRegion = {
+                .bufferOffset = 0,
+                .bufferRowLength = 0,
+                .bufferImageHeight = 0,
+    
+                .imageSubresource = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .mipLevel = 0,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                },
+                .imageExtent = dstImage->extent,
+            };
+
+            //copy the buffer into the image
+            vkCmdCopyBufferToImage(cmd, srcBuffer->buffer, dstImage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+            
+            VkImageMemoryBarrier imageBarrier_toReadable = imageBarrier_toTransfer;
+
+            imageBarrier_toReadable.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+            imageBarrier_toReadable.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            imageBarrier_toReadable.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            imageBarrier_toReadable.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+            //barrier the image into the shader readable layout
+            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toReadable);
         });
     }
 
@@ -713,10 +908,19 @@ namespace mc
             .pImmutableSamplers = nullptr,
         };
 
+        VkDescriptorSetLayoutBinding samplerLayoutBinding = {
+            .binding = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .pImmutableSamplers = nullptr,
+        };
+        
+        std::array bindings = {uboLayoutBinding, samplerLayoutBinding};
         VkDescriptorSetLayoutCreateInfo layoutInfo {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-            .bindingCount = 1,
-            .pBindings = &uboLayoutBinding,
+            .bindingCount = bindings.size(),
+            .pBindings = bindings.data(),
         };
 
         if (vkCreateDescriptorSetLayout(g_state.device, &layoutInfo, g_state.allocator, &g_state.descriptorSetLayout) != VK_SUCCESS)
@@ -751,19 +955,19 @@ namespace mc
             .pSetLayouts = layouts.data(),
         };
 
-        for(FrameData& frame : g_state.frames){
-            if (vkAllocateDescriptorSets(g_state.device, &allocInfo, &frame.uboDescriptor) != VK_SUCCESS)
+        for(FrameData& frame : g_state.frames) {
+            if (vkAllocateDescriptorSets(g_state.device, &allocInfo, &frame.descriptor) != VK_SUCCESS)
                 throw std::runtime_error("failed to allocate descriptor sets!");
-
+            
             VkDescriptorBufferInfo bufferInfo = {
-                .buffer = frame.uboBuffer.buffer,
+                .buffer = frame.uboBuffer->buffer,
                 .offset = 0,
                 .range = sizeof(UniformBufferObject),
             };
 
             VkWriteDescriptorSet descriptorWrite = {
                 .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = frame.uboDescriptor,
+                .dstSet = frame.descriptor,
                 .dstBinding = 0,
                 .dstArrayElement = 0,
                 .descriptorCount = 1,
@@ -1050,8 +1254,48 @@ namespace mc
         for (FrameData& frame : g_state.frames) {
             frame.uboBuffer = CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-            vkMapMemory(g_state.device, frame.uboBuffer.memory, 0, bufferSize, 0, &frame.uboBuffer.mappedMemory);
+            vkMapMemory(g_state.device, frame.uboBuffer->memory, 0, bufferSize, 0, &frame.uboBuffer->mappedMemory);
         }
+    }
+
+    void RendererAPI::CreateImage(Ref<AllocatedImage> image, u32 width, u32 height)
+    {
+        image->extent = {
+            .width = width,
+            .height = height,
+            .depth = 1,
+        };
+        
+        VkImageCreateInfo imageInfo = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .flags = 0,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = VK_FORMAT_R8G8B8A8_SRGB,
+            .extent = image->extent,
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+        
+        if (vkCreateImage(g_state.device, &imageInfo, g_state.allocator, &image->image) != VK_SUCCESS)
+            throw std::runtime_error("failed to create image!");
+        
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(g_state.device, image->image, &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = details::FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        if (vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &image->memory) != VK_SUCCESS)
+            throw std::runtime_error("failed to allocate image memory!");
+
+        vkBindImageMemory(g_state.device, image->image, image->memory, 0);
     }
 
     void RendererAPI::RecreateSwapchain()
@@ -1086,21 +1330,21 @@ namespace mc
         vkDestroySwapchainKHR(g_state.device, g_state.swapchain, g_state.allocator);
     }
 
-    AllocatedBuffer RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, const void* data)
+    Ref<AllocatedBuffer> RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, const void* data)
     {
-        AllocatedBuffer buffer = CreateBuffer(size, usage, properties);
+        Ref<AllocatedBuffer> buffer = CreateBuffer(size, usage, properties);
         
         void* mem = nullptr;
-        vkMapMemory(g_state.device, buffer.memory, 0, size, 0, &mem);
+        vkMapMemory(g_state.device, buffer->memory, 0, size, 0, &mem);
         memcpy(mem, data, size);
-        vkUnmapMemory(g_state.device, buffer.memory);
+        vkUnmapMemory(g_state.device, buffer->memory);
         
         return buffer;
     }
 
-    AllocatedBuffer RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+    Ref<AllocatedBuffer> RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
     {
-        AllocatedBuffer buffer{};
+        Ref<AllocatedBuffer> buffer = CreateRef<AllocatedBuffer>();
 
         VkBufferCreateInfo createInfo = {
             .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -1109,10 +1353,10 @@ namespace mc
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
         
-        vkCreateBuffer(g_state.device, &createInfo, g_state.allocator, &buffer.buffer);
+        vkCreateBuffer(g_state.device, &createInfo, g_state.allocator, &buffer->buffer);
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(g_state.device, buffer.buffer, &memRequirements);
+        vkGetBufferMemoryRequirements(g_state.device, buffer->buffer, &memRequirements);
         
         VkMemoryAllocateInfo allocInfo{
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
@@ -1120,13 +1364,11 @@ namespace mc
             .memoryTypeIndex = details::FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
         };
         
-        if (vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &buffer.memory) != VK_SUCCESS)
+        if (vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &buffer->memory) != VK_SUCCESS)
             throw std::runtime_error("failed to allocate vertex buffer memory!");
 
-        vkBindBufferMemory(g_state.device, buffer.buffer, buffer.memory, 0);
+        vkBindBufferMemory(g_state.device, buffer->buffer, buffer->memory, 0);
 
         return buffer;
     }
 }
-
-#include "RendererUtils.inl"
