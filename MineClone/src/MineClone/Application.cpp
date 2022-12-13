@@ -9,6 +9,80 @@
 
 namespace mc
 {
+    struct Vertex2D
+    {
+        float2 pos;
+        float3 color;
+
+        static VertexDescription GetDescription() {
+            return {
+                .bindingDescription = {
+                    .binding = 0,
+                    .stride = sizeof(Vertex2D),
+                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                },
+                .attributeDescriptions = {
+                    {
+                        .location = 0,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32_SFLOAT,
+                        .offset = offsetof(Vertex2D, pos),
+                    },
+                    {
+                        .location = 1,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(Vertex2D, color),
+                    },
+                },
+            };
+        }
+    };
+
+    struct Vertex3D
+    {
+        float3 pos;
+        float3 normal;
+        float3 color;
+        float2 uv;
+        
+        static VertexDescription GetDescription() {
+            return {
+                .bindingDescription = {
+                    .binding = 0,
+                    .stride = sizeof(Vertex3D),
+                    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+                },
+                .attributeDescriptions = {
+                    {
+                        .location = 0,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(Vertex3D, pos),
+                    },
+                    {
+                        .location = 1,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(Vertex3D, normal),
+                    },
+                    {
+                        .location = 2,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32B32_SFLOAT,
+                        .offset = offsetof(Vertex3D, color),
+                    },
+                    {
+                        .location = 3,
+                        .binding = 0,
+                        .format = VK_FORMAT_R32G32_SFLOAT,
+                        .offset = offsetof(Vertex3D, uv),
+                    },
+                },
+            };
+        }
+    };
+    
     static const std::vector VERTICES = {
         Vertex3D{{-1, -1, 1}, {}, {1.0f, 0.0f, 0.0f}, {0, 0}},
         //0
@@ -31,52 +105,28 @@ namespace mc
 
     static const std::vector<u32> INDICES = {
         //Top
-        7,
-        2,
-        6,
-        3,
-        2,
-        7,
+        7, 2, 6,
+        3, 2, 7,
 
         //Bottom
-        4,
-        0,
-        5,
-        5,
-        0,
-        1,
+        4, 0, 5,
+        5, 0, 1,
 
         //Left
-        2,
-        0,
-        6,
-        6,
-        0,
-        4,
+        2, 0, 6,
+        6, 0, 4,
 
         //Right
-        7,
-        1,
-        3,
-        5,
-        1,
-        7,
+        7, 1, 3,
+        5, 1, 7,
 
         //Front
-        3,
-        0,
-        2,
-        1,
-        0,
-        3,
+        3, 0, 2,
+        1, 0, 3,
 
         //Back
-        6,
-        4,
-        7,
-        7,
-        4,
-        5,
+        6, 4, 7,
+        7, 4, 5,
     };
 
     Ref<AllocatedBuffer> g_vertexBuffer;
@@ -152,8 +202,8 @@ namespace mc
 
     void Application::Render() {
         g_mat->Bind();
-        RendererAPI::Draw(m_cubeTransform, g_mat, g_vertexBuffer, g_indexBuffer, static_cast<u32>(INDICES.size()));
-        RendererAPI::Draw(m_cube2Transform, g_mat, g_vertexBuffer, g_indexBuffer, static_cast<u32>(INDICES.size()));
+        RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(INDICES.size()));
+        RendererAPI::Draw(m_cube2Transform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(INDICES.size()));
     }
 
     void Application::OnEvent(WindowCloseEvent& ev) {

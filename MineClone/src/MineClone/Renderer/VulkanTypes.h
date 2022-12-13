@@ -95,6 +95,8 @@ namespace mc
         std::vector<VkImageView> swapchainImageViews;
         std::vector<VkFramebuffer> swapchainFramebuffers;
 
+        Ref<Material> currentMaterial;
+
         uint32_t currentFrame = 0;
         std::array<FrameData, FrameData::MAX_FRAMES_IN_FLIGHT> frames;
 

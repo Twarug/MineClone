@@ -8,8 +8,7 @@ namespace mc
 {
     struct GlobalState;
 
-    namespace details
-    {
+    namespace details {
         class VulkanUtils;
     }
 
@@ -44,9 +43,8 @@ namespace mc
 
         static void DeleteBuffer(Ref<AllocatedBuffer> buffer);
 
-        static void Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer);
-        static void Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer,
-                         Ref<AllocatedBuffer> indexBuffer, u32 indicesCount);
+        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer);
+        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount);
 
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size);
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
@@ -75,17 +73,14 @@ namespace mc
         static void CreateSyncObjects();
 
         static void CreateUniformBuffers();
-        static void CreateImage(Ref<AllocatedImage> image, u32 width, u32 height, VkFormat format,
-                                VkImageUsageFlags usage);
+        static void CreateImage(Ref<AllocatedImage> image, u32 width, u32 height, VkFormat format, VkImageUsageFlags usage);
 
         static void CreateDepthBuffer();
         static void RecreateSwapchain();
         static void CleanupSwapchain();
 
-        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                                 VkMemoryPropertyFlags properties, const void* data);
-        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                                 VkMemoryPropertyFlags properties);
+        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, const void* data);
+        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 
         friend details::VulkanUtils;
 

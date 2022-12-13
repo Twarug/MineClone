@@ -7,7 +7,7 @@
 
 namespace mc
 {
-    Ref<Material> Material::Create(const std::string& name) {
+    Ref<Material> Material::Create(const std::string& name, const VertexDescription& vertexDescription) {
         auto& state = RendererAPI::GetState();
 
         VkDescriptorSetLayout descriptorSetLayout;
@@ -75,8 +75,8 @@ namespace mc
         }
 
         // Graphics Pipeline
-        auto vertShaderCode = details::VulkanUtils::ReadFile("assets/shaders/shader.vert.spv");
-        auto fragShaderCode = details::VulkanUtils::ReadFile("assets/shaders/shader.frag.spv");
+        auto vertShaderCode = details::VulkanUtils::ReadFile("assets/shaders/" + name + ".vert.spv");
+        auto fragShaderCode = details::VulkanUtils::ReadFile("assets/shaders/" + name + ".frag.spv");
 
         VkShaderModule vertShaderModule = details::VulkanUtils::CreateShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = details::VulkanUtils::CreateShaderModule(fragShaderCode);
@@ -108,8 +108,8 @@ namespace mc
             .pDynamicStates = dynamicStates.data(),
         };
 
-        auto bindingDescription = Vertex3D::GetBindingDescription();
-        auto attributeDescriptions = Vertex3D::GetAttributeDescriptions();
+        auto bindingDescription = vertexDescription.bindingDescription;
+        auto attributeDescriptions = vertexDescription.attributeDescriptions;
 
         VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -157,12 +157,9 @@ namespace mc
             .frontFace = VK_FRONT_FACE_CLOCKWISE,
 
             .depthBiasEnable = VK_FALSE,
-            .depthBiasConstantFactor = 0.0f,
-            // Optional
-            .depthBiasClamp = 0.0f,
-            // Optional
-            .depthBiasSlopeFactor = 0.0f,
-            // Optional
+            .depthBiasConstantFactor = 0.0f, // Optional
+            .depthBiasClamp = 0.0f, // Optional
+            .depthBiasSlopeFactor = 0.0f, // Optional
 
             .lineWidth = 1.0f,
         };
@@ -171,14 +168,10 @@ namespace mc
             .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
             .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
             .sampleShadingEnable = VK_FALSE,
-            .minSampleShading = 1.0f,
-            // Optional
-            .pSampleMask = nullptr,
-            // Optional
-            .alphaToCoverageEnable = VK_FALSE,
-            // Optional
-            .alphaToOneEnable = VK_FALSE,
-            // Optional
+            .minSampleShading = 1.0f, // Optional
+            .pSampleMask = nullptr, // Optional
+            .alphaToCoverageEnable = VK_FALSE, // Optional
+            .alphaToOneEnable = VK_FALSE, // Optional
         };
 
         VkPipelineDepthStencilStateCreateInfo depthStencil = {
@@ -188,14 +181,10 @@ namespace mc
             .depthCompareOp = VK_COMPARE_OP_LESS,
             .depthBoundsTestEnable = VK_FALSE,
             .stencilTestEnable = VK_FALSE,
-            .front = {},
-            // Optional
-            .back = {},
-            // Optional
-            .minDepthBounds = 0.0f,
-            // Optional
-            .maxDepthBounds = 1.0f,
-            // Optional
+            .front = {}, // Optional
+            .back = {}, // Optional
+            .minDepthBounds = 0.0f, // Optional
+            .maxDepthBounds = 1.0f, // Optional
         };
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment{
@@ -212,12 +201,10 @@ namespace mc
         VkPipelineColorBlendStateCreateInfo colorBlending = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
             .logicOpEnable = VK_FALSE,
-            .logicOp = VK_LOGIC_OP_COPY,
-            // Optional
+            .logicOp = VK_LOGIC_OP_COPY, // Optional
             .attachmentCount = 1,
             .pAttachments = &colorBlendAttachment,
-            .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f},
-            // Optional
+            .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f}, // Optional
         };
 
         VkPushConstantRange pushConstant = {
@@ -284,6 +271,8 @@ namespace mc
     void Material::Bind() {
         auto& state = RendererAPI::GetState();
         auto& frame = state.GetCurrentFrame();
+
+        state.currentMaterial = shared_from_this();
 
         vkCmdBindPipeline(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
         vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);

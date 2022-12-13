@@ -2,18 +2,25 @@
 
 #include <vulkan/vulkan.h>
 
+#include "RendererTypes.h"
 #include "Textures/Texture.h"
 
 namespace mc
 {
-    class Material
+    class Material : std::enable_shared_from_this<Material>
     {
     public:
-        static Ref<Material> Create(const std::string& name);
+        static Ref<Material> Create(const std::string& name, const VertexDescription& vertexDescription);
+
+    public:
+        Material(const Material&) = delete;
+        Material(Material&&) noexcept = default;
+        
+        Material& operator=(const Material&) = delete;
+        Material& operator=(Material&&) noexcept = default;
 
     private:
-        Material(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet descriptorSet, VkPipeline pipeline,
-                 VkPipelineLayout pipelineLayout);
+        Material(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorSet descriptorSet, VkPipeline pipeline, VkPipelineLayout pipelineLayout);
 
     public:
         ~Material();

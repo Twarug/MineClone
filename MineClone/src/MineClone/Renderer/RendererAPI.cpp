@@ -207,6 +207,7 @@ namespace mc
         else if(result != VK_SUCCESS)
             throw std::runtime_error("failed to present swap chain image!");
 
+        g_state.currentMaterial = nullptr;
         g_state.currentFrame = (g_state.currentFrame + 1) % FrameData::MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -327,7 +328,7 @@ namespace mc
         buffer = nullptr;
     }
 
-    void RendererAPI::Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer) {
+    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer) {
         FrameData& frame = g_state.GetCurrentFrame();
 
         MeshPushConstants pushConstants{transform};
@@ -335,15 +336,13 @@ namespace mc
         VkBuffer vertexBuffers[] = {vertexBuffer->buffer};
         VkDeviceSize offsets[] = {0};
 
-        vkCmdPushConstants(frame.commandBuffer, material->m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                           sizeof(MeshPushConstants), &pushConstants);
+        vkCmdPushConstants(frame.commandBuffer, g_state.currentMaterial->m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
 
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
 
-    void RendererAPI::Draw(const Mat4& transform, Ref<Material> material, Ref<AllocatedBuffer> vertexBuffer,
-                           Ref<AllocatedBuffer> indexBuffer, u32 indicesCount) {
+    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount) {
         FrameData& frame = g_state.GetCurrentFrame();
 
         MeshPushConstants pushConstants{transform};
@@ -353,8 +352,7 @@ namespace mc
 
         // vkCmdBindDescriptorSets(frame.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, g_state.pipelineLayout, 0, 1, &frame.uboDescriptor, 0, nullptr);
 
-        vkCmdPushConstants(frame.commandBuffer, material->m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                           sizeof(MeshPushConstants), &pushConstants);
+        vkCmdPushConstants(frame.commandBuffer, g_state.currentMaterial->m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(MeshPushConstants), &pushConstants);
 
         vkCmdBindVertexBuffers(frame.commandBuffer, 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(frame.commandBuffer, indexBuffer->buffer, 0, VK_INDEX_TYPE_UINT32);
@@ -365,10 +363,8 @@ namespace mc
     void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size) {
         ImmediateSubmit([=](VkCommandBuffer cmd) {
             VkBufferCopy copyRegion = {
-                .srcOffset = 0,
-                // Optional
-                .dstOffset = 0,
-                // Optional
+                .srcOffset = 0, // Optional
+                .dstOffset = 0, // Optional
                 .size = size,
             };
 
@@ -417,8 +413,7 @@ namespace mc
             };
 
             //copy the buffer into the image
-            vkCmdCopyBufferToImage(cmd, srcBuffer->buffer, dstImage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-                                   &copyRegion);
+            vkCmdCopyBufferToImage(cmd, srcBuffer->buffer, dstImage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
             VkImageMemoryBarrier imageBarrier_toReadable = imageBarrier_toTransfer;
 
@@ -437,8 +432,6 @@ namespace mc
     void RendererAPI::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function) {
         VkCommandBuffer commandBuffer = g_state.uploadContext.commandBuffer;
         VkFence fence = g_state.uploadContext.uploadFence;
-        //begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
-        // VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
         VkCommandBufferBeginInfo beginInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -554,9 +547,7 @@ namespace mc
 
     void RendererAPI::CreateSurface() {
         // Create Surface
-        if(glfwCreateWindowSurface(g_state.instance,
-                                   static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()),
-                                   g_state.allocator, &g_state.surface) != VK_SUCCESS)
+        if(glfwCreateWindowSurface(g_state.instance, static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()), g_state.allocator, &g_state.surface) != VK_SUCCESS)
             throw std::runtime_error("failed to create window surface!");
     }
 
@@ -662,11 +653,10 @@ namespace mc
             extent = g_state.swapchainSupportDetails.capabilities.currentExtent;
         else {
             int width, height;
-            glfwGetFramebufferSize(static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()),
-                                   &width, &height);
+            glfwGetFramebufferSize(static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()), &width, &height);
 
             extent = {
-                std::clamp(static_cast<u32>(width), g_state.swapchainSupportDetails.capabilities.minImageExtent.width,
+                std::clamp(static_cast<u32>(width), g_state.swapchainSupportDetails.capabilities.minImageExtent.width, 
                            g_state.swapchainSupportDetails.capabilities.maxImageExtent.width),
                 std::clamp(static_cast<u32>(height), g_state.swapchainSupportDetails.capabilities.minImageExtent.height,
                            g_state.swapchainSupportDetails.capabilities.maxImageExtent.height)
@@ -674,8 +664,7 @@ namespace mc
         }
 
         u32 imageCount = g_state.swapchainSupportDetails.capabilities.minImageCount + 1;
-        if(g_state.swapchainSupportDetails.capabilities.maxImageCount > 0 && imageCount > g_state.
-                                                                                          swapchainSupportDetails.capabilities.maxImageCount)
+        if(g_state.swapchainSupportDetails.capabilities.maxImageCount > 0 && imageCount > g_state.swapchainSupportDetails.capabilities.maxImageCount)
             imageCount = g_state.swapchainSupportDetails.capabilities.maxImageCount;
 
 
@@ -744,8 +733,7 @@ namespace mc
                 }
             };
 
-            if(vkCreateImageView(g_state.device, &createInfo, g_state.allocator, &g_state.swapchainImageViews[i]) !=
-                VK_SUCCESS)
+            if(vkCreateImageView(g_state.device, &createInfo, g_state.allocator, &g_state.swapchainImageViews[i]) != VK_SUCCESS)
                 throw std::runtime_error("failed to create image views!");
         }
     }
@@ -772,7 +760,7 @@ namespace mc
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
             .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         };
-        std::array attachemnts = {colorAttachment, depthAttachment};
+        std::array attachments = {colorAttachment, depthAttachment};
 
         VkAttachmentReference colorAttachmentRef = {
             .attachment = 0,
@@ -798,8 +786,8 @@ namespace mc
 
         VkRenderPassCreateInfo renderPassInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-            .attachmentCount = static_cast<u32>(attachemnts.size()),
-            .pAttachments = attachemnts.data(),
+            .attachmentCount = static_cast<u32>(attachments.size()),
+            .pAttachments = attachments.data(),
             .subpassCount = 1,
             .pSubpasses = &subpass,
         };
@@ -1163,6 +1151,7 @@ namespace mc
     }
 
     void RendererAPI::CreateUniformBuffers() {
+        // ReSharper disable once CppTooWideScope
         u64 bufferSize = sizeof(UniformBufferObject);
         for(FrameData& frame : g_state.frames) {
             frame.uboBuffer = CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,

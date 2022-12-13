@@ -6,9 +6,7 @@
 namespace mc
 {
     Camera::Camera(float fov, u32 width, u32 height)
-        : m_fov(fov),
-          m_proj(glm::perspective(glm::radians(fov), static_cast<float>(width) / static_cast<float>(height), 0.1f,
-                                  1000.f)) {}
+        : m_fov(fov), m_proj(glm::perspective(glm::radians(fov), static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.f)) {}
 
     Mat4 Camera::GetView() const {
         return inverse(
@@ -23,7 +21,6 @@ namespace mc
     }
 
     void Camera::OnResize(u32 width, u32 height) {
-        m_proj = glm::perspective(glm::radians(m_fov), static_cast<float>(width) / static_cast<float>(height), 0.1f,
-                                  1000.f);
+        m_proj = glm::perspective(glm::radians(m_fov), static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.f);
     }
 }
