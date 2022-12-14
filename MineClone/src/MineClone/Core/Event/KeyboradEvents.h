@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "Event.h"
-#include "MineClone/Input/KeyCode.h"
+#include "MineClone/Core/Input/KeyCode.h"
 
 namespace mc
 {

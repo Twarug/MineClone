@@ -1,7 +1,7 @@
 ﻿#include "mcpch.h"
 #include "FirstPersonCamera.h"
 
-#include "MineClone/Input/Input.h"
+#include "MineClone/Core/Input/Input.h"
 
 namespace mc
 {

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "MineClone/Renderer/Camera.h"
+#include "MineClone/Core/Renderer/Camera.h"
 
 namespace mc
 {

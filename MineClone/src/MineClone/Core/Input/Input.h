@@ -3,9 +3,9 @@
 #include "KeyCode.h"
 #include "MouseCode.h"
 
-#include "MineClone/Event/EventHandler.h"
-#include "MineClone/Event/MouseEvents.h"
-#include "MineClone/Event/ApplicationEvents.h"
+#include "MineClone/Core/Event/EventHandler.h"
+#include "MineClone/Core/Event/MouseEvents.h"
+#include "MineClone/Core/Event/ApplicationEvents.h"
 
 namespace mc
 {

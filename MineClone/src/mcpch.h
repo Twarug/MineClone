@@ -28,4 +28,4 @@
 #include <functional>
 
 #include "MineClone/Core.h"
-#include "MineClone/Math/Math.h"
+#include "MineClone/Core/Math/Math.h"

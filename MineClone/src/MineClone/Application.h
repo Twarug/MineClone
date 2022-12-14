@@ -1,9 +1,9 @@
 ﻿#pragma once
 
 #include "FirstPersonCamera.h"
-#include "MineClone/Window.h"
+#include "MineClone/Core/Window.h"
 
-#include "MineClone/Event/WindowEvents.h"
+#include "MineClone/Core/Event/WindowEvents.h"
 
 namespace mc
 {

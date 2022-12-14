@@ -1,8 +1,7 @@
 ﻿#pragma once
 
-#include "MineClone/Core.h"
 #include "Event.h"
-#include "MineClone/Input/MouseCode.h"
+#include "MineClone/Core/Input/MouseCode.h"
 
 namespace mc
 {

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <memory>
 
-#include "MineClone/Math/Math.h"
+#include "MineClone/Core/Math/Math.h"
 
 #ifdef NDEBUG
     #define MC_DEBUGBREAK() __debugbreak()
