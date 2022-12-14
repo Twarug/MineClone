@@ -8,7 +8,8 @@ namespace mc
 {
     struct GlobalState;
 
-    namespace details {
+    namespace details
+    {
         class VulkanUtils;
     }
 

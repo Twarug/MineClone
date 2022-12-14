@@ -121,7 +121,7 @@ namespace mc
             throw std::runtime_error("failed to begin recording command buffer!");
 
         std::array clearColor = {
-            VkClearValue{.color = {{0.0f, 0.0f, 0.0f, 1.0f}}},
+            VkClearValue{.color = {{0.46f, 0.46f, 0.46f, 1.0f}}},
             VkClearValue{.depthStencil = {1.f, 0}},
         };
 
@@ -656,7 +656,7 @@ namespace mc
             glfwGetFramebufferSize(static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow()), &width, &height);
 
             extent = {
-                std::clamp(static_cast<u32>(width), g_state.swapchainSupportDetails.capabilities.minImageExtent.width, 
+                std::clamp(static_cast<u32>(width), g_state.swapchainSupportDetails.capabilities.minImageExtent.width,
                            g_state.swapchainSupportDetails.capabilities.maxImageExtent.width),
                 std::clamp(static_cast<u32>(height), g_state.swapchainSupportDetails.capabilities.minImageExtent.height,
                            g_state.swapchainSupportDetails.capabilities.maxImageExtent.height)

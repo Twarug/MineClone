@@ -7,7 +7,9 @@
 
 namespace mc
 {
-    class Material : std::enable_shared_from_this<Material>
+    struct VertexDescription;
+    
+    class Material : public std::enable_shared_from_this<Material>
     {
     public:
         static Ref<Material> Create(const std::string& name, const VertexDescription& vertexDescription);
@@ -15,7 +17,7 @@ namespace mc
     public:
         Material(const Material&) = delete;
         Material(Material&&) noexcept = default;
-        
+
         Material& operator=(const Material&) = delete;
         Material& operator=(Material&&) noexcept = default;
 

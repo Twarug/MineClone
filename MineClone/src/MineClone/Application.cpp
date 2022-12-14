@@ -45,7 +45,7 @@ namespace mc
         float3 normal;
         float3 color;
         float2 uv;
-        
+
         static VertexDescription GetDescription() {
             return {
                 .bindingDescription = {
@@ -82,51 +82,81 @@ namespace mc
             };
         }
     };
-    
-    static const std::vector VERTICES = {
-        Vertex3D{{-1, -1, 1}, {}, {1.0f, 0.0f, 0.0f}, {0, 0}},
-        //0
-        Vertex3D{{1, -1, 1}, {}, {0.0f, 1.0f, 0.0f}, {1, 0}},
-        //1
-        Vertex3D{{-1, 1, 1}, {}, {0.0f, 0.0f, 1.0f}, {0, 1}},
-        //2
-        Vertex3D{{1, 1, 1}, {}, {1.0f, 1.0f, 1.0f}, {1, 1}},
-        //3
 
-        Vertex3D{{-1, -1, -1}, {}, {1.0f, 0.0f, 0.0f}, {0, 0}},
-        //4
-        Vertex3D{{1, -1, -1}, {}, {0.0f, 1.0f, 0.0f}, {1, 0}},
-        //5
-        Vertex3D{{-1, 1, -1}, {}, {0.0f, 0.0f, 1.0f}, {0, 1}},
-        //6
-        Vertex3D{{1, 1, -1}, {}, {1.0f, 1.0f, 1.0f}, {1, 1}},
-        //7
-    };
+    static const std::array<std::array<Vertex3D, 4>, 6> VERTICES = {{
+        // Top
+        {{
+            {{ 0,  1,  1}, { 0,  1,  0}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 0
+            {{ 1,  1,  1}, { 0,  1,  0}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 1
+            {{ 0,  1,  0}, { 0,  1,  0}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 2
+            {{ 1,  1,  0}, { 0,  1,  0}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 3
+        }},
+        
+        // Bottom
+        {{
+            {{ 0,  0,  0}, { 0, -1,  0}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 4
+            {{ 1,  0,  0}, { 0, -1,  0}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 5
+            {{ 0,  0,  1}, { 0, -1,  0}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 6
+            {{ 1,  0,  1}, { 0, -1,  0}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 7
+        }},
+        
+        // Front
+        {{
+            {{ 0,  0,  1}, { 0,  0,  1}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 8
+            {{ 1,  0,  1}, { 0,  0,  1}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 9
+            {{ 0,  1,  1}, { 0,  0,  1}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 10
+            {{ 1,  1,  1}, { 0,  0,  1}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 11
+        }},
+        
+        // Back
+        {{
+            {{ 1,  0,  0}, { 0,  0, -1}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 12
+            {{ 0,  0,  0}, { 0,  0, -1}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 13
+            {{ 1,  1,  0}, { 0,  0, -1}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 14
+            {{ 0,  1,  0}, { 0,  0, -1}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 15
+        }},
+        
+        // Right
+        {{
+            {{ 1,  0,  1}, { 1,  0,  0}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 16
+            {{ 1,  0,  0}, { 1,  0,  0}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 17
+            {{ 1,  1,  1}, { 1,  0,  0}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 18
+            {{ 1,  1,  0}, { 1,  0,  0}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 19
+        }},
+        
+        // Left
+        {{
+            {{ 0,  0,  0}, {-1,  0,  0}, {1.0f, 0.0f, 0.0f}, {0, 0}}, // 20
+            {{ 0,  0,  1}, {-1,  0,  0}, {0.0f, 1.0f, 0.0f}, {1, 0}}, // 21
+            {{ 0,  1,  0}, {-1,  0,  0}, {0.0f, 0.0f, 1.0f}, {0, 1}}, // 22
+            {{ 0,  1,  1}, {-1,  0,  0}, {1.0f, 1.0f, 1.0f}, {1, 1}}, // 23
+        }},
+    }};
 
     static const std::vector<u32> INDICES = {
-        //Top
-        7, 2, 6,
-        3, 2, 7,
+        // Top
+        0, 3, 1,
+        0, 2, 3,
 
-        //Bottom
-        4, 0, 5,
-        5, 0, 1,
+        // Bottom
+        4, 7, 5,
+        4, 6, 7,
+        
+        // Front
+        8, 11, 9,
+        8, 10, 11,
+        
+        // Back
+        12, 15, 13,
+        12, 14, 15,
 
-        //Left
-        2, 0, 6,
-        6, 0, 4,
+        // Right
+        16, 19, 17,
+        16, 18, 19,
 
-        //Right
-        7, 1, 3,
-        5, 1, 7,
-
-        //Front
-        3, 0, 2,
-        1, 0, 3,
-
-        //Back
-        6, 4, 7,
-        7, 4, 5,
+        // Left
+        20, 23, 21,
+        20, 22, 23,
     };
 
     Ref<AllocatedBuffer> g_vertexBuffer;
@@ -155,11 +185,12 @@ namespace mc
 
         RendererAPI::Init();
 
-        g_vertexBuffer = RendererAPI::CreateVertexBuffer(std::span(VERTICES));
+        g_vertexBuffer = RendererAPI::CreateVertexBuffer(std::span(VERTICES.data(), VERTICES.size() * VERTICES[0].size()));
         g_indexBuffer = RendererAPI::CreateIndexBuffer(std::span(INDICES));
 
         g_texture = RendererAPI::LoadTexture("assets/texture.png");
-        g_mat = Material::Create("default");
+        auto des = Vertex3D::GetDescription();
+        g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
 
         while(m_isRunning) {

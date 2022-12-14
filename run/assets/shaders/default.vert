@@ -21,7 +21,7 @@ layout(location = 2) out vec2 outUV;
 
 void main() {
     gl_Position = ubo.proj * ubo.view * pushConstants.model * vec4(inPosition, 1.0);
-    outNormal = inNormal;
+    outNormal = inNormal * inverse(mat3(pushConstants.model));
     outColor = inColor;
     outUV = inUV; 
 }
