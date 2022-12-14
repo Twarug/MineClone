@@ -8,7 +8,7 @@
 namespace mc
 {
     struct VertexDescription;
-    
+
     class Material : public std::enable_shared_from_this<Material>
     {
     public:

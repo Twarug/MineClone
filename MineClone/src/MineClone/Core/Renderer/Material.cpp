@@ -250,7 +250,7 @@ namespace mc
             vkDestroyShaderModule(state.device, fragShaderModule, state.allocator);
             vkDestroyShaderModule(state.device, vertShaderModule, state.allocator);
         }
-      
+
         return CreateRef(new Material(descriptorSetLayout, descriptorSet, pipeline, pipelineLayout));
     }
 
