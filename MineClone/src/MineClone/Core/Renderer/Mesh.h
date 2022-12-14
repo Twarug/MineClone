@@ -7,6 +7,7 @@ namespace mc
     {
     public:
         Mesh();
+        ~Mesh();
 
         void Render(const Mat4& transform) const;
 
@@ -15,6 +16,8 @@ namespace mc
         template <typename T>
         void SetVertices(std::span<T> vertices);
 
+        void Dispose();
+        
     private:
         Ref<AllocatedBuffer> m_vertexBuffer;
         Ref<AllocatedBuffer> m_indexBuffer;
@@ -23,3 +26,5 @@ namespace mc
         u64 m_vertexBufferSize = 0;
     };
 }
+
+#include "Mesh.tpp"

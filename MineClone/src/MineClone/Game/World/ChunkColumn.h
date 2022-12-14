@@ -18,7 +18,13 @@ namespace mc
         ChunkColumn& operator=(ChunkColumn&& other) noexcept = delete;
 
     public:
+        void Update();
+        
+        void UpdateMesh();
         void Render();
+
+    public:
+        const auto& GetChunks() const { return m_chunks; }
 
     public:
         BlockState* GetBlockState(int3 blockPos) override;
@@ -28,8 +34,13 @@ namespace mc
     private:
         World& m_world;
 
+        bool m_hasHeightMap = false;
+        std::array<i32, (u64)Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.z> m_heightMap;
+
         std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks;
 
         int2 m_pos;
+        
+        friend class ChunkGenerator;
     };
 }

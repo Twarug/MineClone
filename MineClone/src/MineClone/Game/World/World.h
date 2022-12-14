@@ -6,7 +6,7 @@ namespace mc
     class World final : public IBlockStateProvider
     {
     public:
-        World() = default;
+        World();
         virtual ~World() = default;
 
     public:

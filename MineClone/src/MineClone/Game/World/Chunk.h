@@ -23,6 +23,10 @@ namespace mc
         Chunk& operator=(Chunk&& other) noexcept = delete;
 
     public:
+        void Update();
+
+
+        void UpdateMesh();        
         void Render() const;
 
     public:
@@ -32,12 +36,17 @@ namespace mc
         void SetBlockState(int3 blockPos, const BlockState& blockState) override;
 
     private:
+        static u64 ToIndex(int3 chunkPos);
+            
+    private:
         ChunkColumn& m_chunkColumn;
-        std::array<BlockState, Config::WORLD_SIZE.x * Config::WORLD_SIZE.y * Config::WORLD_SIZE.z> m_blockStates;
+        std::array<BlockState, Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.y * Config::CHUNK_SIZE.z> m_blockStates;
 
         int3 m_pos;
 
         Mesh m_mesh;
         Mat4 m_transform{};
+
+        friend class ChunkGenerator;
     };
 }

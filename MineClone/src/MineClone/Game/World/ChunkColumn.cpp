@@ -8,6 +8,14 @@ namespace mc
     ChunkColumn::ChunkColumn(World& world, int2 pos)
         : m_world(world), m_pos(pos) {}
 
+    void ChunkColumn::Update() {}
+    
+    void ChunkColumn::UpdateMesh() {
+        for(Scope<Chunk>& chunk : m_chunks)
+            if(chunk)
+                chunk->UpdateMesh();
+    }
+
     void ChunkColumn::Render() {
         for(Scope<Chunk>& chunk : m_chunks)
             if(chunk)
@@ -15,9 +23,15 @@ namespace mc
     }
 
     BlockState* ChunkColumn::GetBlockState(int3 blockPos) {
+        if(blockPos.y >= Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y)
+            return nullptr;
+
+        if(blockPos.y < 0)
+            return nullptr;        
+        
         int3 chunkID = ToChunkID(blockPos);
         int2 columnID = int2(chunkID.xz);
-
+        
         if(columnID != m_pos)
             return m_world.GetBlockState(blockPos);
 
@@ -28,6 +42,12 @@ namespace mc
     }
 
     const BlockState* ChunkColumn::GetBlockState(int3 blockPos) const {
+        if(blockPos.y >= Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y)
+            return nullptr;
+
+        if(blockPos.y < 0)
+            return nullptr;
+        
         int3 chunkID = ToChunkID(blockPos);
         int2 columnID = int2(chunkID.xz);
 

@@ -13,6 +13,7 @@ namespace mc
 
         static const Block& AIR;
         static const Block& STONE;
+        static const Block& DIRT;
 
     protected:
         explicit constexpr Block(const std::string& name, float3 color, bool transparent = false);
