@@ -2,6 +2,7 @@
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+#include <glm/gtx/hash.hpp>
 
 namespace mc
 {
@@ -37,6 +38,15 @@ namespace mc
     using double3 = Vec3<f64>;
     using double4 = Vec4<f64>;
 
+
+    using short2 = Vec2<i16>;
+    using short3 = Vec3<i16>;
+    using short4 = Vec4<i16>;
+
+    using ushort2 = Vec2<u16>;
+    using ushort3 = Vec3<u16>;
+    using ushort4 = Vec4<u16>;
+
     using int2 = Vec2<i32>;
     using int3 = Vec3<i32>;
     using int4 = Vec4<i32>;
@@ -44,6 +54,14 @@ namespace mc
     using uint2 = Vec2<u32>;
     using uint3 = Vec3<u32>;
     using uint4 = Vec4<u32>;
+
+    using long2 = Vec2<i64>;
+    using long3 = Vec3<i64>;
+    using long4 = Vec4<i64>;
+
+    using ulong2 = Vec2<u64>;
+    using ulong3 = Vec3<u64>;
+    using ulong4 = Vec4<u64>;
     // ReSharper restore CppInconsistentNaming
 
     template <int W, int H>

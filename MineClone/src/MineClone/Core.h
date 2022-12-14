@@ -21,7 +21,7 @@ namespace mc
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
-    template<typename T>
+    template <typename T>
     constexpr Ref<T> CreateRef(T* arg) {
         return Ref<T>(arg);
     }
