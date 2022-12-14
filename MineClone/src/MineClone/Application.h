@@ -5,6 +5,8 @@
 
 #include "MineClone/Core/Event/WindowEvents.h"
 
+#include "Game/World/World.h"
+
 namespace mc
 {
     class Application final : EventHandler<WindowCloseEvent, WindowResizeEvent>
@@ -44,6 +46,8 @@ namespace mc
 
         Mat4 m_cubeTransform{1};
         Mat4 m_cube2Transform{1};
+
+        Scope<World> m_world;
 
     private:
         inline static Application* s_instance = nullptr;
