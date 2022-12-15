@@ -27,5 +27,7 @@ namespace mc::details
         static VkShaderModule CreateShaderModule(const std::vector<byte>& code);
 
         static uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+        static VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     };
 }

@@ -26,6 +26,8 @@ namespace mc
         CreateLogicalDevice();
         CreateSwapchain();
         CreateImageViews();
+        
+        CreateDepthBuffer();
         CreateRenderPass();
 
         CreateUniformBuffers();
@@ -34,7 +36,6 @@ namespace mc
         // CreateDescriptorSets();
 
         // CreateGraphicsPipeline();
-        CreateDepthBuffer();
         CreateFramebuffers();
         CreateCommandPool();
         CreateCommandBuffers();
@@ -751,7 +752,7 @@ namespace mc
         };
 
         VkAttachmentDescription depthAttachment = {
-            .format = VK_FORMAT_D24_UNORM_S8_UINT,
+            .format = g_state.depthTexture->format,
             .samples = VK_SAMPLE_COUNT_1_BIT,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -778,11 +779,6 @@ namespace mc
             .pColorAttachments = &colorAttachmentRef,
             .pDepthStencilAttachment = &depthAttachmentRef,
         };
-
-        VkSubpassDependency dependency = {
-
-        };
-
 
         VkRenderPassCreateInfo renderPassInfo = {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
@@ -1205,15 +1201,20 @@ namespace mc
 
 
     void RendererAPI::CreateDepthBuffer() {
+        VkFormat format = details::VulkanUtils::FindSupportedFormat(
+            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+        );
         g_state.depthTexture = CreateRef<AllocatedImage>();
         CreateImage(g_state.depthTexture, g_state.swapchainExtent.width, g_state.swapchainExtent.height,
-                    VK_FORMAT_D24_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+                    format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
         VkImageViewCreateInfo viewInfo = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = g_state.depthTexture->image,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = VK_FORMAT_D24_UNORM_S8_UINT,
+            .format = format,
             .components = {
                 .r = VK_COMPONENT_SWIZZLE_IDENTITY,
                 .g = VK_COMPONENT_SWIZZLE_IDENTITY,
