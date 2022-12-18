@@ -3,6 +3,8 @@
 
 #include "RendererAPI.h"
 
+#include <vulkan/vulkan.h>
+
 namespace mc
 {
     Mesh::~Mesh() {
@@ -15,14 +17,25 @@ namespace mc
     }
 
     void Mesh::SetIndices(std::span<u32> indices) {
-        u32 newCount = static_cast<u32>(indices.size());
+        u32 newCount = (u32)indices.size();
 
-        if(m_indicesCount == 0) {
-            if (newCount > 0)
-               m_indexBuffer = RendererAPI::CreateIndexBuffer(indices);
+        if(m_indexBufferCap < newCount) {
+            // Create/recreate buffer
+            if(m_indexBufferCap > 0)
+                RendererAPI::DeleteBuffer(m_indexBuffer);
+                
+            m_indexBuffer = RendererAPI::CreateIndexBuffer(indices);
+            m_indexBufferCap = newCount;
         }
-        else
-            throw std::exception("TODO: add buffer updating");
+        else if(newCount > 0) {
+            // Update Data
+            u64 size = newCount * sizeof(u32);
+            auto stageBuffer = RendererAPI::CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indices.data());
+
+            RendererAPI::CopyBuffer(stageBuffer, m_indexBuffer, size);
+
+            RendererAPI::DeleteBuffer(stageBuffer);
+        }
 
         m_indicesCount = newCount;
     }
@@ -34,7 +47,9 @@ namespace mc
         if(m_vertexBuffer)
             RendererAPI::DeleteBuffer(m_vertexBuffer);
 
+        m_indexBufferCap = 0;
+        m_vertexBufferCap = 0;
         m_indicesCount = 0;
-        m_vertexBufferSize = 0;
+        m_vertexCount = 0;
     }
 }

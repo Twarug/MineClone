@@ -1299,9 +1299,7 @@ namespace mc
         VkMemoryAllocateInfo allocInfo{
             .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
             .allocationSize = memRequirements.size,
-            .memoryTypeIndex = details::VulkanUtils::FindMemoryType(memRequirements.memoryTypeBits,
-                                                                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
+            .memoryTypeIndex = details::VulkanUtils::FindMemoryType(memRequirements.memoryTypeBits, properties),
         };
 
         if(vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &buffer->memory) != VK_SUCCESS)

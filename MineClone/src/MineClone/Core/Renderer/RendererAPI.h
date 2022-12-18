@@ -87,6 +87,7 @@ namespace mc
 
         friend class Material;
         friend class Texture;
+        friend class Mesh;
     };
 }
 
