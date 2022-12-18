@@ -19,9 +19,11 @@ namespace mc
 
         static constexpr int RENDER_DISTANCE = 5;
 
-        static const std::array<std::array<Vertex3D, 4>, 6> VERTICES;
+        static constexpr ulong2 ATLAS_SIZE = {2, 2};
+        static constexpr float2 ATLAS_ELEMENT_SIZE = {1.f / ATLAS_SIZE.x, 1.f / ATLAS_SIZE.y};
 
         static const std::array<u32, 6ull * 6ull> INDICES;
+        static const std::array<std::array<Vertex3D, 4>, 6> VERTICES;
     };
 
     

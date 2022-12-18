@@ -8,7 +8,11 @@ namespace mc
     ChunkColumn::ChunkColumn(World& world, int2 pos)
         : m_world(world), m_pos(pos) {}
 
-    void ChunkColumn::Update() {}
+    void ChunkColumn::Tick() {
+        for(Scope<Chunk>& chunk : m_chunks)
+            if(chunk)
+                chunk->Tick(m_world);
+    }
     
     void ChunkColumn::UpdateMesh() {
         for(Scope<Chunk>& chunk : m_chunks)
@@ -23,7 +27,7 @@ namespace mc
     }
 
     BlockState* ChunkColumn::GetBlockState(int3 blockPos) {
-        if(blockPos.y >= Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y)
+        if(blockPos.y >= (i32)(Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y))
             return nullptr;
 
         if(blockPos.y < 0)
@@ -42,7 +46,7 @@ namespace mc
     }
 
     const BlockState* ChunkColumn::GetBlockState(int3 blockPos) const {
-        if(blockPos.y >= Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y)
+        if(blockPos.y >= (i32)(Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y))
             return nullptr;
 
         if(blockPos.y < 0)

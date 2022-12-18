@@ -16,7 +16,7 @@ namespace mc
         World& operator=(World&& other) noexcept = default;
 
     public:
-        void Update();
+        void Tick();
 
         void Render();
 

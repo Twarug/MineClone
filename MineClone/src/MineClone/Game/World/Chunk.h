@@ -23,8 +23,7 @@ namespace mc
         Chunk& operator=(Chunk&& other) noexcept = delete;
 
     public:
-        void Update();
-
+        void Tick(World& world);
 
         void UpdateMesh();        
         void Render() const;
@@ -40,7 +39,7 @@ namespace mc
             
     private:
         ChunkColumn& m_chunkColumn;
-        std::array<BlockState, Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.y * Config::CHUNK_SIZE.z> m_blockStates;
+        std::array<BlockState, (u64)(Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.y * Config::CHUNK_SIZE.z)> m_blockStates;
 
         int3 m_pos;
 

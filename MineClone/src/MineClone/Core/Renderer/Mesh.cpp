@@ -5,7 +5,6 @@
 
 namespace mc
 {
-    Mesh::Mesh() = default;
     Mesh::~Mesh() {
         Dispose();
     }

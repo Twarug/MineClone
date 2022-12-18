@@ -12,9 +12,8 @@ namespace mc
     class RegistryEntry
     {
     protected:
-        explicit constexpr RegistryEntry(std::string name);
-
-        constexpr virtual ~RegistryEntry() = default;
+        explicit RegistryEntry(std::string name);
+        virtual ~RegistryEntry() = default;
 
     public:
         RegistryEntry(const RegistryEntry& other) = delete;

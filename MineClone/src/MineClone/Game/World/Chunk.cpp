@@ -4,21 +4,24 @@
 #include <glm/ext/matrix_transform.hpp>
 
 #include "ChunkColumn.h"
+#include "MineClone/Game/Utils/Facing.h"
 
 namespace mc
 {
-    std::array<int3, 6> g_dirs = {{
-        { 0,  1,  0},
-        { 0, -1,  0},
-        { 0,  0,  1},
-        { 0,  0, -1},
-        { 1,  0,  0},
-        {-1,  0,  0},
-    }};
-
     Chunk::Chunk(ChunkColumn& chunkColumn, int3 pos)
         : m_chunkColumn(chunkColumn), m_pos(pos), m_transform(translate(Mat4{1}, float3(pos) * float3(Config::CHUNK_SIZE))) {}
 
+    void Chunk::Tick(World& world) {
+        int3 pos = {0, 0, 0};
+        for(; pos.z < Config::CHUNK_SIZE.z; pos.z++)
+            for(; pos.y < Config::CHUNK_SIZE.y; pos.y++)
+                for(; pos.x < Config::CHUNK_SIZE.x; pos.x++)
+                {
+                    BlockState& blockState = m_blockStates[ToIndex(pos)];
+                    blockState.GetBlock().Tick(world, pos, blockState);
+                }
+    }
+    
     void Chunk::UpdateMesh() {
         std::vector<Vertex3D> vertices;
         std::vector<u32> indices;
@@ -34,8 +37,8 @@ namespace mc
 
                     float3 color = current.GetBlock().GetColor();
                     
-                    for(u64 i = 0; i < g_dirs.size(); i++) {
-                        int3 neighbourPos = chunkPos + g_dirs[i];
+                    for(u64 i = 0; i < Facing::FACINGS.size(); i++) {
+                        int3 neighbourPos = chunkPos + Facing::FACINGS[i].directionVec;
                         
                         BlockState* neighbour = nullptr;
                         if(neighbourPos.x < 0 || neighbourPos.x >= Config::CHUNK_SIZE.x ||

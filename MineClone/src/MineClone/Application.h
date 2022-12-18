@@ -41,6 +41,8 @@ namespace mc
         float m_deltaTime{};
         std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint = std::chrono::high_resolution_clock::now();
 
+        int3 m_lastPlayerChunk {};
+        
         Scope<Window> m_window;
         Scope<FirstPersonCamera> m_camera;
 

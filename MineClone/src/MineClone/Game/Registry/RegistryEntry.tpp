@@ -5,7 +5,7 @@
 namespace mc
 {
     template <typename T>
-    constexpr RegistryEntry<T>::RegistryEntry(std::string name)
+    RegistryEntry<T>::RegistryEntry(std::string name)
         : m_identifier(std::move(name)) { }
 
     template <typename T>

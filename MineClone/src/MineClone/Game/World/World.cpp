@@ -28,8 +28,9 @@ namespace mc
             // column.UpdateMesh();
     }
 
-    void World::Update() {
-        
+    void World::Tick() {
+        for(auto& chunkColumn : m_chunkColumns | std::views::values)
+            chunkColumn.Tick();
     }
 
     void World::Render() {

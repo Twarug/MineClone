@@ -18,7 +18,7 @@ namespace mc
         ChunkColumn& operator=(ChunkColumn&& other) noexcept = delete;
 
     public:
-        void Update();
+        void Tick();
         
         void UpdateMesh();
         void Render();
@@ -35,9 +35,9 @@ namespace mc
         World& m_world;
 
         bool m_hasHeightMap = false;
-        std::array<i32, (u64)Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.z> m_heightMap;
+        std::array<i32, (u64)Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.z> m_heightMap{};
 
-        std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks;
+        std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks{};
 
         int2 m_pos;
         

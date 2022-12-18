@@ -68,6 +68,32 @@ namespace mc
     }
 
 
+    const std::array<u32, 6ull * 6ull> Config::INDICES = {{
+        // Top
+        0, 3, 1,
+        0, 2, 3,
+
+        // Bottom
+        4, 7, 5,
+        4, 6, 7,
+
+        // Front
+        8, 11, 9,
+        8, 10, 11,
+
+        // Back
+        12, 15, 13,
+        12, 14, 15,
+
+        // Right
+        16, 19, 17,
+        16, 18, 19,
+
+        // Left
+        20, 23, 21,
+        20, 22, 23,
+    }};
+
     const std::array<std::array<Vertex3D, 4>, 6> Config::VERTICES = {{
         // Top
         {
@@ -128,31 +154,5 @@ namespace mc
                 {{0, 1, 1}, {-1, 0, 0}, {1, 1, 1}, {1, 1}}, // 23
             }
         },
-    }};
-
-    const std::array<u32, 6ull * 6ull> Config::INDICES = {{
-        // Top
-        0, 3, 1,
-        0, 2, 3,
-
-        // Bottom
-        4, 7, 5,
-        4, 6, 7,
-
-        // Front
-        8, 11, 9,
-        8, 10, 11,
-
-        // Back
-        12, 15, 13,
-        12, 14, 15,
-
-        // Right
-        16, 19, 17,
-        16, 18, 19,
-
-        // Left
-        20, 23, 21,
-        20, 22, 23,
     }};
 }

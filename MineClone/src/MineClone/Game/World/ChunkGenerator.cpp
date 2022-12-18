@@ -4,11 +4,7 @@
 #include <random>
 
 namespace mc
-{
-    static std::random_device g_dev;
-    static std::mt19937 g_rng(g_dev());
-    static std::uniform_int_distribution<std::mt19937::result_type> g_dist6(0, 5);
-    
+{    
     void ChunkGenerator::GenerateChunk(Chunk& chunk) {
         ChunkColumn& column = chunk.m_chunkColumn;
 
@@ -37,6 +33,6 @@ namespace mc
         int2 chunkPos = chunkColumn.m_pos * Config::CHUNK_SIZE.xz;
         for(i32 z = 0; z < Config::CHUNK_SIZE.z; z++)
             for(i32 x = 0; x < Config::CHUNK_SIZE.x; x++)
-                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = 10 + sin((x + chunkPos.x) / 3.0 + (z  + chunkPos.y) / 8.0)*1.5;
+                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = 10 + (i32)(sin((x + chunkPos.x) / 3.0 + (z  + chunkPos.y) / 8.0) * 1.5);
     }
 }

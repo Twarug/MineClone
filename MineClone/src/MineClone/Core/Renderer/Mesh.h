@@ -6,7 +6,7 @@ namespace mc
     class Mesh
     {
     public:
-        Mesh();
+        Mesh() = default;
         ~Mesh();
 
         void Render(const Mat4& transform) const;

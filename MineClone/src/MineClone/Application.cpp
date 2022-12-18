@@ -30,7 +30,7 @@ namespace mc
 
         m_window = CreateScope<Window>(1280, 720, name);
         m_camera = CreateScope<FirstPersonCamera>(60.f, 1280, 720);
-        m_camera->SetPos({0, 1, 10});
+        m_camera->SetPos({0, 15, 30});
         m_camera->SetRot({-30, 0});
 
         RendererAPI::Init();
@@ -45,7 +45,7 @@ namespace mc
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
 
-        m_world->Update();
+        m_world->Tick();
         while(m_isRunning) {
             Update();
 
@@ -83,14 +83,14 @@ namespace mc
         }
 
         m_camera->Update(m_deltaTime);
-        m_cubeTransform *= rotate(Mat4{1}, glm::radians(10.f * m_deltaTime), {0, 1, 0});
+        // m_cubeTransform *= rotate(Mat4{1}, glm::radians(10.f * m_deltaTime), {0, 1, 0});
     }
 
     void Application::Render() {
         g_mat->Bind();
         m_world->Render();
-        RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(Config::INDICES.size()));
-        RendererAPI::Draw(m_cube2Transform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(Config::INDICES.size()));
+        // RendererAPI::Draw(m_cubeTransform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(Config::INDICES.size()));
+        // RendererAPI::Draw(m_cube2Transform, g_vertexBuffer, g_indexBuffer, static_cast<u32>(Config::INDICES.size()));
     }
 
     void Application::OnEvent(WindowCloseEvent& ev) {
