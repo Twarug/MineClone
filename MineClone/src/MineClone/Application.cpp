@@ -84,6 +84,14 @@ namespace mc
 
         m_camera->Update(m_deltaTime);
         // m_cubeTransform *= rotate(Mat4{1}, glm::radians(10.f * m_deltaTime), {0, 1, 0});
+
+        static float timer = 0.f;
+        static bool blockIndex = 0;
+        if((timer += m_deltaTime) > 5.f) {
+            timer -= 5.f;
+            m_world->SetBlockState({16, 18, 16}, BlockState(blockIndex ? Block::DIRT : Block::STONE));
+            blockIndex = !blockIndex;
+        }
     }
 
     void Application::Render() {

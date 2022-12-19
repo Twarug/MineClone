@@ -10,7 +10,7 @@ namespace mc
         for(u64 z = 0; z < Config::WORLD_SIZE.z; z++)
             for(u64 x = 0; x < Config::WORLD_SIZE.x; x++) {
                 int2 columnPos = {x, z};
-                ChunkColumn& column = m_chunkColumns.emplace(columnPos, ChunkColumn(*this, columnPos)).first->second;
+                ChunkColumn& column = m_chunkColumns.emplace(columnPos, ChunkColumn(columnPos, *this)).first->second;
 
                 for(u64 y = 0; y < Config::WORLD_SIZE.y; y++)
                     ChunkGenerator::CreateChunk(column, {x, y, z});
@@ -36,6 +36,20 @@ namespace mc
     void World::Render() {
         for(auto& chunkColumn : m_chunkColumns | std::views::values)
             chunkColumn.Render();
+    }
+
+    Chunk* World::GetChunk(int3 chunkID) {
+        int2 columnID = chunkID.xz;
+        if(!m_chunkColumns.contains(columnID))
+            return nullptr;
+        return m_chunkColumns.at(columnID).GetChunk(chunkID);
+    }
+
+    const Chunk* World::GetChunk(int3 chunkID) const {
+        int2 columnID = chunkID.xz;
+        if(!m_chunkColumns.contains(columnID))
+            return nullptr;
+        return m_chunkColumns.at(columnID).GetChunk(chunkID);
     }
 
     BlockState* World::GetBlockState(int3 blockPos) {

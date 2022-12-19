@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "BlockState.h"
-#include "BlockStateProvider.h"
+#include "IBlockStateProvider.h"
 #include "MineClone/Config.h"
 #include "MineClone/Core/Renderer/Mesh.h"
 
@@ -14,7 +14,7 @@ namespace mc
     class Chunk final : public IBlockStateProvider
     {
     public:
-        explicit Chunk(ChunkColumn& chunkColumn, int3 pos);
+        explicit Chunk(int3 id, ChunkColumn& chunkColumn);
         virtual ~Chunk() = default;
 
         Chunk(const Chunk& other) = delete;
@@ -38,11 +38,11 @@ namespace mc
         static u64 ToIndex(int3 chunkPos);
             
     private:
+        int3 m_id;
         ChunkColumn& m_chunkColumn;
+        
         std::array<BlockState, (u64)(Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.y * Config::CHUNK_SIZE.z)> m_blockStates;
-
-        int3 m_pos;
-
+        
         Mesh m_mesh;
         Mat4 m_transform{};
 

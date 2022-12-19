@@ -1,15 +1,16 @@
 ﻿#pragma once
 #include "Chunk.h"
+#include "IChunkProvider.h"
 #include "MineClone/Config.h"
 
 namespace mc
 {
     class World;
 
-    class ChunkColumn final : public IBlockStateProvider
+    class ChunkColumn final : public IChunkProvider
     {
     public:
-        explicit ChunkColumn(World& world, int2 pos);
+        explicit ChunkColumn(int2 id, World& world);
         virtual ~ChunkColumn() = default;
 
         ChunkColumn(const ChunkColumn& other) = delete;
@@ -24,6 +25,9 @@ namespace mc
         void Render();
 
     public:
+        Chunk* GetChunk(int3 chunkID) override;
+        const Chunk* GetChunk(int3 chunkID) const override;
+        
         const auto& GetChunks() const { return m_chunks; }
 
     public:
@@ -32,6 +36,7 @@ namespace mc
         void SetBlockState(int3 blockPos, const BlockState& blockState) override;
 
     private:
+        int2 m_id;
         World& m_world;
 
         bool m_hasHeightMap = false;
@@ -39,7 +44,6 @@ namespace mc
 
         std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks{};
 
-        int2 m_pos;
         
         friend class ChunkGenerator;
     };

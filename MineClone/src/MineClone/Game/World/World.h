@@ -1,9 +1,10 @@
 ﻿#pragma once
 #include "ChunkColumn.h"
+#include "IChunkProvider.h"
 
 namespace mc
 {
-    class World final : public IBlockStateProvider
+    class World final : public IChunkProvider
     {
     public:
         World();
@@ -21,6 +22,9 @@ namespace mc
         void Render();
 
     public:
+        Chunk* GetChunk(int3 chunkID) override;
+        const Chunk* GetChunk(int3 chunkID) const override;
+        
         BlockState* GetBlockState(int3 blockPos) override;
         const BlockState* GetBlockState(int3 blockPos) const override;
         void SetBlockState(int3 blockPos, const BlockState& blockState) override;

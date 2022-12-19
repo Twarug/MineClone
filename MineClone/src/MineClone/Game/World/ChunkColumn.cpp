@@ -5,8 +5,8 @@
 
 namespace mc
 {
-    ChunkColumn::ChunkColumn(World& world, int2 pos)
-        : m_world(world), m_pos(pos) {}
+    ChunkColumn::ChunkColumn(int2 id, World& world)
+        : m_id(id), m_world(world) {}
 
     void ChunkColumn::Tick() {
         for(Scope<Chunk>& chunk : m_chunks)
@@ -26,6 +26,20 @@ namespace mc
                 chunk->Render();
     }
 
+    Chunk* ChunkColumn::GetChunk(int3 chunkID) {
+        int2 columnID = chunkID.xz;
+        if(columnID != m_id)
+            return m_world.GetChunk(chunkID);
+        return m_chunks.at(chunkID.y).get();
+    }
+    
+    const Chunk* ChunkColumn::GetChunk(int3 chunkID) const {
+        int2 columnID = chunkID.xz;
+        if(columnID != m_id)
+            return m_world.GetChunk(chunkID);
+        return m_chunks.at(chunkID.y).get();
+    }
+
     BlockState* ChunkColumn::GetBlockState(int3 blockPos) {
         if(blockPos.y >= (i32)(Config::WORLD_SIZE.y * Config::CHUNK_SIZE.y))
             return nullptr;
@@ -36,7 +50,7 @@ namespace mc
         int3 chunkID = ToChunkID(blockPos);
         int2 columnID = int2(chunkID.xz);
         
-        if(columnID != m_pos)
+        if(columnID != m_id)
             return m_world.GetBlockState(blockPos);
 
         if(const Scope<Chunk>& chunk = m_chunks[chunkID.y])
@@ -55,7 +69,7 @@ namespace mc
         int3 chunkID = ToChunkID(blockPos);
         int2 columnID = int2(chunkID.xz);
 
-        if(columnID != m_pos)
+        if(columnID != m_id)
             return m_world.GetBlockState(blockPos);
 
         if(const Scope<Chunk>& chunk = m_chunks[chunkID.y])
@@ -68,7 +82,7 @@ namespace mc
         int3 chunkID = ToChunkID(blockPos);
         int2 columnID = int2(chunkID.xz);
 
-        if(columnID != m_pos) {
+        if(columnID != m_id) {
             m_world.SetBlockState(blockPos, blockState);
             return;
         }
