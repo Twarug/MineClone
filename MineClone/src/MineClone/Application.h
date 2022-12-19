@@ -25,9 +25,14 @@ namespace mc
         const Window& GetMainWindow() const { return *m_window; }
 
     private:
+        void Init();
+        void Cleanup();
+        
+        void Tick();
         void Update();
         void Render();
-
+        
+        
     protected:
         void OnEvent(WindowCloseEvent& ev) override;
         void OnEvent(WindowResizeEvent& ev) override;
@@ -45,9 +50,6 @@ namespace mc
         
         Scope<Window> m_window;
         Scope<FirstPersonCamera> m_camera;
-
-        Mat4 m_cubeTransform{1};
-        Mat4 m_cube2Transform{1};
 
         Scope<World> m_world;
 
