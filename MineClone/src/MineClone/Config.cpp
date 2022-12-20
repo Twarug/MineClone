@@ -155,4 +155,27 @@ namespace mc
             }
         },
     }};
+
+    constexpr std::array<int3, Config::RENDER_DISTANCE_ARRAY_DIM * Config::RENDER_DISTANCE_ARRAY_DIM * Config::RENDER_DISTANCE_ARRAY_DIM> Config::GeneratePattern() {
+        std::array<int3, RENDER_DISTANCE_ARRAY_DIM * RENDER_DISTANCE_ARRAY_DIM * RENDER_DISTANCE_ARRAY_DIM> array{};
+
+        i64 i = 0;
+        i32 l = RENDER_DISTANCE_ARRAY_DIM;
+        i32 n = l / 2;
+        for(i32 k = 0; k <= 3 * n; k++)
+            for(i32 x = -std::min(n - (l + 1) % 2, k); x <= std::min(n, k); x++)
+                for(i32 y = -std::min(n - (l + 1) % 2, k - std::abs(x)); y <= std::min(n, k - std::abs(x)); y++) {
+                    i32 z = k - std::abs(x) - std::abs(y);
+                    if(z <= n) {
+                        array[i++] = {x, y, z};
+                        if(z != 0 && (l % 2 != 0 || z < n))
+                            array[i++] = {x, y, -z};
+                    }
+                }
+        
+        return array;
+    }
+    
+    const std::array<int3, Config::RENDER_DISTANCE_ARRAY_DIM * Config::RENDER_DISTANCE_ARRAY_DIM * Config::RENDER_DISTANCE_ARRAY_DIM> Config::CHUNK_RENDER_PATTERN = GeneratePattern();
+
 }
