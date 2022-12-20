@@ -115,7 +115,7 @@ namespace mc
         }
 
 
-        int3 currentChunkID = Chunk::ToChunkID(m_camera->GetPos());
+        int3 currentChunkID = Chunk::ToChunkID(glm::floor(m_camera->GetPos()));
         if(currentChunkID != m_lastPlayerChunkID) {
             ChunkGenerator::UpdatePlayer(m_world, currentChunkID);
             m_lastPlayerChunkID = currentChunkID;
