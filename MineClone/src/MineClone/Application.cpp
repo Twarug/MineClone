@@ -9,6 +9,8 @@
 
 namespace mc
 {
+    Mesh g_boundaryMesh;
+    
     Ref<Texture> g_texture;
 
     Ref<Material> g_mat;
@@ -50,6 +52,22 @@ namespace mc
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
 
+        std::array<Vertex3D, 6ull * 4ull> verts{};
+
+        i32 index = 0;
+        for(const Facing& facing : Facing::FACINGS)
+            for(i32 j = 0; j < 4; j++, index++) {
+                verts[index] = Config::VERTICES[facing.index][(j + 2) % 4];
+                verts[index].pos *= Config::CHUNK_SIZE;
+                verts[index].color = facing.directionVec;
+                verts[index].uv  *= facing.directionVec.y != 0 ? int2(Config::CHUNK_SIZE.xz) :
+                                      facing.directionVec.x != 0 ? int2(Config::CHUNK_SIZE.yz) :
+                                                                   int2(Config::CHUNK_SIZE.xy);
+            }
+
+        g_boundaryMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
+        g_boundaryMesh.SetVertices(std::span(verts.data(), 6ull * 4ull));
+        
         u64 i = 0;
         for(int3 pos : Config::CHUNK_RENDER_PATTERN)
             std::cout << std::setw(2) << i++ << ". " << to_string(pos) << '\n';
@@ -57,6 +75,7 @@ namespace mc
 
     void Application::Cleanup() {
         RendererAPI::Wait();
+        g_boundaryMesh.Dispose();
         g_mat = nullptr;
         RendererAPI::DeleteTexture(g_texture);
 
@@ -106,6 +125,13 @@ namespace mc
     void Application::Render() {
         g_mat->Bind();
         m_world->Render();
+
+        if(Input::GetKey(KeyCode::B).pressed) {
+            if(Chunk* chunk = m_world->GetChunk(m_lastPlayerChunkID)) {
+                int3 chunkID = chunk->GetID();
+                g_boundaryMesh.Render(glm::translate(Mat4{1}, float3(chunkID * Config::CHUNK_SIZE)));
+            }
+        }
     }
 
     void Application::OnEvent(WindowCloseEvent& ev) {

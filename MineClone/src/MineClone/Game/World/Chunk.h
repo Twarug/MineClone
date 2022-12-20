@@ -29,6 +29,8 @@ namespace mc
         void Render() const;
 
     public:
+        int3 GetID() const { return m_id; }
+ 
         BlockState* GetBlockState(int3 blockPos) override;
         const BlockState* GetBlockState(int3 blockPos) const override;
 

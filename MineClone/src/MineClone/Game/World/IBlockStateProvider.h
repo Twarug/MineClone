@@ -24,9 +24,9 @@ namespace mc
     public:
         static int3 ToChunkID(int3 blockPos) {
             return {
-                blockPos.x / Config::CHUNK_SIZE.x - (i32)(blockPos.x < 0),
-                blockPos.y / Config::CHUNK_SIZE.y - (i32)(blockPos.y < 0),
-                blockPos.z / Config::CHUNK_SIZE.z - (i32)(blockPos.z < 0),
+                (blockPos.x + (blockPos.x < 0))  / Config::CHUNK_SIZE.x - (blockPos.x < 0),
+                blockPos.y / Config::CHUNK_SIZE.y,
+                (blockPos.z + (blockPos.z < 0))  / Config::CHUNK_SIZE.z - (blockPos.z < 0),
             };
         }
 
