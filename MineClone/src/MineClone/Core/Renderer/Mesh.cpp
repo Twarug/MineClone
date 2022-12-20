@@ -16,7 +16,7 @@ namespace mc
             RendererAPI::Draw(transform, m_vertexBuffer, m_indexBuffer, m_indicesCount);
     }
 
-    void Mesh::SetIndices(std::span<u32> indices) {
+    void Mesh::SetIndices(std::span<const u32> indices) {
         u32 newCount = (u32)indices.size();
 
         if(m_indexBufferCap < newCount) {

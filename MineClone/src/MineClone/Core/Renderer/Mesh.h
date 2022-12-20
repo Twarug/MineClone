@@ -11,7 +11,7 @@ namespace mc
 
         void Render(const Mat4& transform) const;
 
-        void SetIndices(std::span<u32> indices);
+        void SetIndices(std::span<const u32> indices);
 
         template <typename T>
         void SetVertices(std::span<T> vertices);
