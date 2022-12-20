@@ -5,8 +5,10 @@
 
 namespace mc
 {
-    static constexpr float SPEED = 5.f;
     static constexpr float SENSITIVITY = .1f;
+    
+    static constexpr float SPEED = 5.f;
+    static constexpr float SPRINT_MULTIPLIER = 2.f;
 
     FirstPersonCamera::FirstPersonCamera(float fov, u32 width, u32 height)
         : Camera(fov, width, height) {}
@@ -53,6 +55,9 @@ namespace mc
         if(length(vel) == 0.f)
             return;
 
+        if(Input::GetKey(KeyCode::LeftControl).pressed)
+            vel *= SPRINT_MULTIPLIER;
+        
         m_pos += vel * SPEED * deltaTime;
     }
 }
