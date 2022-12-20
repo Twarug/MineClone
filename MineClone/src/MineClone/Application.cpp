@@ -61,8 +61,8 @@ namespace mc
                 verts[index].pos *= Config::CHUNK_SIZE;
                 verts[index].color = facing.directionVec;
                 verts[index].uv  *= facing.directionVec.y != 0 ? int2(Config::CHUNK_SIZE.xz) :
-                                      facing.directionVec.x != 0 ? int2(Config::CHUNK_SIZE.yz) :
-                                                                   int2(Config::CHUNK_SIZE.xy);
+                                    facing.directionVec.x != 0 ? int2(Config::CHUNK_SIZE.yz) :
+                                                                 int2(Config::CHUNK_SIZE.xy);
             }
 
         g_boundaryMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
