@@ -84,7 +84,7 @@ namespace mc
             return m_chunkColumn.GetBlockState(blockPos);
 
         int3 chunkPos = ToChunkPos(blockPos);
-        int index = ToIndex(chunkPos);
+        u64 index = ToIndex(chunkPos);
         return &m_blockStates[index];
     }
 
@@ -95,7 +95,7 @@ namespace mc
             return m_chunkColumn.GetBlockState(blockPos);
 
         int3 chunkPos = ToChunkPos(blockPos);
-        int index = ToIndex(chunkPos);
+        u64 index = ToIndex(chunkPos);
         return &m_blockStates[index];
     }
 

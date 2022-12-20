@@ -10,7 +10,7 @@ namespace mc
 {
     void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {
 
-        std::cout << "New player pos: " << to_string(currentChunkID) << '\n';
+        // std::cout << "New player pos: " << to_string(currentChunkID) << '\n';
         
         std::ranges::for_each(Config::CHUNK_RENDER_PATTERN, [&world, currentChunkID](int3 relative) {
             int3 chunkID = currentChunkID + relative;
