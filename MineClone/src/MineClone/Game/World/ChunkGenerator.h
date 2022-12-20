@@ -8,10 +8,14 @@ namespace mc
     class ChunkGenerator
     {
     public:
+        static void UpdatePlayer(Scope<World>& world, int3 currentChunkID);
+
         static void GenerateChunk(Chunk& chunk);
         static Chunk& CreateChunk(ChunkColumn& column, int3 chunkID);
 
-    private:
         static void GenerateHeightMap(ChunkColumn& chunkColumn);
+
+    private:
+        static bool IsOutsideWorld(int3 chunkID);
     };
 }

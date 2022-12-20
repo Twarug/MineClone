@@ -1,12 +1,44 @@
 ﻿#include "mcpch.h"
 #include "ChunkGenerator.h"
 
+#include <execution>
 #include <random>
 
 #include "World.h"
 
 namespace mc
-{    
+{
+    void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {
+
+        std::cout << "New player pos: " << to_string(currentChunkID) << '\n';
+        
+        std::ranges::for_each(Config::CHUNK_RENDER_PATTERN, [&world, currentChunkID](int3 relative) {
+            int3 chunkID = currentChunkID + relative;
+            if(IsOutsideWorld(chunkID))
+                return;
+
+            int2 columnID = chunkID.xz;
+
+            ChunkColumn* column = nullptr;
+            if(world->m_chunkColumns.contains(columnID))
+                column = &world->m_chunkColumns.at(columnID);
+            else
+                column = &world->m_chunkColumns.emplace(columnID, ChunkColumn(columnID, *world)).first->second;
+
+            if(column->GetChunk(chunkID))
+                return;
+                
+            Chunk& chunk = CreateChunk(*column, chunkID);
+            GenerateChunk(chunk);
+            chunk.UpdateMesh();
+            for(const Facing& face : Facing::FACINGS) {
+                int3 neighbourChunkID = chunkID + face.directionVec;
+                if(Chunk* neighbour = world->GetChunk(neighbourChunkID))
+                    neighbour->UpdateMesh();
+            }
+        });
+    }
+
     void ChunkGenerator::GenerateChunk(Chunk& chunk) {
         ChunkColumn& column = chunk.m_chunkColumn;
 
@@ -36,5 +68,11 @@ namespace mc
         for(i32 z = 0; z < Config::CHUNK_SIZE.z; z++)
             for(i32 x = 0; x < Config::CHUNK_SIZE.x; x++)
                 chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = 10 + (i32)(sin((x + chunkPos.x) / 3.0 + (z  + chunkPos.y) / 8.0) * 1.5);
+    }
+
+    bool ChunkGenerator::IsOutsideWorld(int3 chunkID) {
+        return chunkID.x < -(i32)Config::WORLD_SIZE.x / 2 || chunkID.x >= (i32)Config::WORLD_SIZE.x / 2 ||
+               chunkID.y < 0                              || chunkID.y >= (i32)Config::WORLD_SIZE.y     ||
+               chunkID.z < -(i32)Config::WORLD_SIZE.z / 2 || chunkID.z >= (i32)Config::WORLD_SIZE.z / 2;
     }
 }

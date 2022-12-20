@@ -5,28 +5,7 @@
 
 namespace mc
 {
-    World::World() {
-
-        for(u64 z = 0; z < Config::WORLD_SIZE.z; z++)
-            for(u64 x = 0; x < Config::WORLD_SIZE.x; x++) {
-                int2 columnPos = {x, z};
-                ChunkColumn& column = m_chunkColumns.emplace(columnPos, ChunkColumn(columnPos, *this)).first->second;
-
-                for(u64 y = 0; y < Config::WORLD_SIZE.y; y++)
-                    ChunkGenerator::CreateChunk(column, {x, y, z});
-            }
-
-        for(ChunkColumn& column : m_chunkColumns | std::views::values)
-            for(const Scope<Chunk>& chunk : column.GetChunks())
-                if(chunk)
-                    ChunkGenerator::GenerateChunk(*chunk);
-        
-        for(ChunkColumn& column : m_chunkColumns | std::views::values)
-            for(const Scope<Chunk>& chunk : column.GetChunks())
-                if(chunk)
-                    chunk->UpdateMesh();
-            // column.UpdateMesh();
-    }
+    World::World() {}
 
     void World::Tick() {
         for(auto& chunkColumn : m_chunkColumns | std::views::values)
@@ -81,6 +60,6 @@ namespace mc
             return;
         }
 
-        std::cout << "Trying to set block " << blockState.GetBlock().GetName() << " in non existing chunk column.\n";
+        std::cout << "Trying to set block " << blockState.GetBlock().GetName() << " in non existing chunk column " << to_string(blockPos) << '\n';
     }
 }

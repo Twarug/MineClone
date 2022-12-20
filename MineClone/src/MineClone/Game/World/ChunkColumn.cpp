@@ -27,10 +27,16 @@ namespace mc
     }
 
     Chunk* ChunkColumn::GetChunk(int3 chunkID) {
+        if(chunkID.y < 0 || chunkID.y >= Config::WORLD_SIZE.y)
+            return nullptr;
+        
         int2 columnID = chunkID.xz;
         if(columnID != m_id)
             return m_world.GetChunk(chunkID);
-        return m_chunks.at(chunkID.y).get();
+        Scope<Chunk>& chunk = m_chunks.at(chunkID.y);
+        if(chunk)
+            return chunk.get();
+        return nullptr;
     }
     
     const Chunk* ChunkColumn::GetChunk(int3 chunkID) const {

@@ -1,6 +1,8 @@
 ﻿#include "mcpch.h"
 #include "Application.h"
 
+#include "Core/Input/Input.h"
+#include "Game/World/ChunkGenerator.h"
 #include "MineClone/Core/Event/ApplicationEvents.h"
 #include "MineClone/Core/Renderer/RendererAPI.h"
 #include "MineClone/Core/Renderer/RendererTypes.h"
@@ -47,6 +49,10 @@ namespace mc
         auto des = Vertex3D::GetDescription();
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
+
+        u64 i = 0;
+        for(int3 pos : Config::CHUNK_RENDER_PATTERN)
+            std::cout << std::setw(2) << i++ << ". " << to_string(pos) << '\n';
     }
 
     void Application::Cleanup() {
@@ -87,6 +93,13 @@ namespace mc
             timer -= 5.f;
             m_world->SetBlockState({16, 18, 16}, BlockState(blockIndex ? Block::DIRT : Block::STONE));
             blockIndex = !blockIndex;
+        }
+
+
+        int3 currentChunkID = Chunk::ToChunkID(m_camera->GetPos());
+        if(currentChunkID != m_lastPlayerChunkID) {
+            ChunkGenerator::UpdatePlayer(m_world, currentChunkID);
+            m_lastPlayerChunkID = currentChunkID;
         }
     }
 

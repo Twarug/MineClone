@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "MineClone/Config.h"
 
 namespace mc
 {

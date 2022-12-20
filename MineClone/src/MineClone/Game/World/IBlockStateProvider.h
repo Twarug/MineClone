@@ -21,7 +21,7 @@ namespace mc
 
         virtual void SetBlockState(int3 blockPos, const BlockState& blockState) = 0;
 
-    protected:
+    public:
         static int3 ToChunkID(int3 blockPos) {
             return {
                 blockPos.x / Config::CHUNK_SIZE.x - (i32)(blockPos.x < 0),
@@ -32,9 +32,9 @@ namespace mc
 
         static int3 ToChunkPos(int3 blockPos) {
             return {
-                std::abs(blockPos.x % Config::CHUNK_SIZE.x + (blockPos.x < 0) * Config::CHUNK_SIZE.x),
-                std::abs(blockPos.y % Config::CHUNK_SIZE.y + (blockPos.y < 0) * Config::CHUNK_SIZE.y),
-                std::abs(blockPos.z % Config::CHUNK_SIZE.z + (blockPos.z < 0) * Config::CHUNK_SIZE.z),
+                blockPos.x < 0 ? (blockPos.x + 1) % Config::CHUNK_SIZE.x + Config::CHUNK_SIZE.x - 1 : blockPos.x % Config::CHUNK_SIZE.x,
+                blockPos.y % Config::CHUNK_SIZE.y,
+                blockPos.z < 0 ? (blockPos.z + 1) % Config::CHUNK_SIZE.z + Config::CHUNK_SIZE.z - 1 : blockPos.z % Config::CHUNK_SIZE.z,
             };
         }
     };

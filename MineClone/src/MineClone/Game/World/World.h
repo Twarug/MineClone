@@ -31,5 +31,7 @@ namespace mc
 
     private:
         std::unordered_map<int2, ChunkColumn> m_chunkColumns;
+
+        friend class ChunkGenerator;
     };
 }

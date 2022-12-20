@@ -83,7 +83,9 @@ namespace mc
         if(chunkID != m_id)
             return m_chunkColumn.GetBlockState(blockPos);
 
-        return &m_blockStates[ToIndex(ToChunkPos(blockPos))];
+        int3 chunkPos = ToChunkPos(blockPos);
+        int index = ToIndex(chunkPos);
+        return &m_blockStates[index];
     }
 
     const BlockState* Chunk::GetBlockState(int3 blockPos) const {        
@@ -92,7 +94,9 @@ namespace mc
         if(chunkID != m_id)
             return m_chunkColumn.GetBlockState(blockPos);
 
-        return &m_blockStates[ToIndex(ToChunkPos(blockPos))];
+        int3 chunkPos = ToChunkPos(blockPos);
+        int index = ToIndex(chunkPos);
+        return &m_blockStates[index];
     }
 
     void Chunk::SetBlockState(int3 blockPos, const BlockState& blockState) {
