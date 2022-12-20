@@ -304,7 +304,7 @@ namespace mc
         vkDestroyImageView(g_state.device, texture->imageView, g_state.allocator);
         DeleteImage(texture);
 
-        texture = {};
+        *texture = {};
     }
 
     Ref<AllocatedImage> RendererAPI::CreateImage(u32 width, u32 height, VkFormat format) {
@@ -319,14 +319,17 @@ namespace mc
         vkFreeMemory(g_state.device, image->memory, g_state.allocator);
         vkDestroyImage(g_state.device, image->image, g_state.allocator);
 
-        image = nullptr;
+        image->memory = VK_NULL_HANDLE;
+        image->image = VK_NULL_HANDLE;
+        
+        *image = {};
     }
 
     void RendererAPI::DeleteBuffer(Ref<AllocatedBuffer> buffer) {
         vkDestroyBuffer(g_state.device, buffer->buffer, g_state.allocator);
         vkFreeMemory(g_state.device, buffer->memory, g_state.allocator);
 
-        buffer = nullptr;
+        *buffer = {};
     }
 
     void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer) {

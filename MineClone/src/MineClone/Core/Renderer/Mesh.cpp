@@ -47,6 +47,9 @@ namespace mc
         if(m_vertexBuffer)
             RendererAPI::DeleteBuffer(m_vertexBuffer);
 
+        m_indexBuffer = nullptr;
+        m_vertexBuffer = nullptr;
+        
         m_indexBufferCap = 0;
         m_vertexBufferCap = 0;
         m_indicesCount = 0;
