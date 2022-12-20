@@ -67,10 +67,6 @@ namespace mc
 
         g_boundaryMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
         g_boundaryMesh.SetVertices(std::span(verts.data(), 6ull * 4ull));
-        
-        u64 i = 0;
-        for(int3 pos : Config::CHUNK_RENDER_PATTERN)
-            std::cout << std::setw(2) << i++ << ". " << to_string(pos) << '\n';
     }
 
     void Application::Cleanup() {
