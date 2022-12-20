@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "ChunkColumn.h"
 
+#include "FastNoiseLite.h"
+
 namespace mc
 {
     class Chunk;
@@ -8,6 +10,8 @@ namespace mc
     class ChunkGenerator
     {
     public:
+        static void Init(i32 seed);
+        
         static void UpdatePlayer(Scope<World>& world, int3 currentChunkID);
 
         static void GenerateChunk(Chunk& chunk);
@@ -17,5 +21,7 @@ namespace mc
 
     private:
         static bool IsOutsideWorld(int3 chunkID);
+
+        inline static FastNoiseLite s_noise{};
     };
 }

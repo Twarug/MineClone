@@ -38,6 +38,7 @@ namespace mc
     }
 
     void Application::Init() {
+        // Application
         m_window = CreateScope<Window>(1280, 720, name);
         m_camera = CreateScope<FirstPersonCamera>(60.f, 1280, 720);
         m_camera->SetPos({0, 15, 30});
@@ -52,6 +53,10 @@ namespace mc
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
 
+        // Game
+
+        ChunkGenerator::Init(2137);
+        
         std::array<Vertex3D, 6ull * 4ull> verts{};
 
         i32 index = 0;

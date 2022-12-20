@@ -8,6 +8,13 @@
 
 namespace mc
 {
+    void ChunkGenerator::Init(i32 seed) {
+        s_noise = FastNoiseLite(seed);
+        // s_noise.SetFractalType(FastNoiseLite::FractalType_PingPong);
+        // s_noise.SetFrequency(1.f);        
+        // s_noise.SetFractalOctaves(6); 
+    }
+
     void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {
 
         // std::cout << "New player pos: " << to_string(currentChunkID) << '\n';
@@ -67,7 +74,7 @@ namespace mc
         int2 chunkPos = chunkColumn.m_id * Config::CHUNK_SIZE.xz;
         for(i32 z = 0; z < Config::CHUNK_SIZE.z; z++)
             for(i32 x = 0; x < Config::CHUNK_SIZE.x; x++)
-                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = 10 + (i32)(sin((x + chunkPos.x) / 3.0 + (z  + chunkPos.y) / 8.0) * 1.5);
+                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = (i32)(10.f + s_noise.GetNoise((float)(chunkPos.x + x), (float)(chunkPos.y + z)) * 10.f);
     }
 
     bool ChunkGenerator::IsOutsideWorld(int3 chunkID) {

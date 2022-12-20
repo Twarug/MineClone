@@ -54,6 +54,7 @@ includedirs({
     "%{prj.name}/vendor/glfw/include", -- GLFW
     "%{prj.name}/vendor/glm", -- glm
     "%{prj.name}/vendor/stb", -- stb
+    "%{prj.name}/vendor/FastNoise", -- FastNoise
     os.getenv("VULKAN_SDK") .. "/Include", -- Vulkan, VMA
 })
 
