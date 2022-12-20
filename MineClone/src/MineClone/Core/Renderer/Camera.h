@@ -9,6 +9,9 @@ namespace mc
 
         void SetPos(float3 pos) { m_pos = pos; }
         void SetRot(float2 rot) { m_rot = rot; }
+        
+        float3 GetPos() const { return m_pos; }
+        float2 GetRot() const { return m_rot; }
 
         Mat4 GetView() const;
         Mat4 GetProjection() const;
