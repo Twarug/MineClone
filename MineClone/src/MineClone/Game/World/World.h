@@ -4,6 +4,14 @@
 
 namespace mc
 {
+    struct HitInfo
+    {
+        bool hit;
+        BlockState* blockState;
+
+        int3 blockPos;
+    };
+    
     class World final : public IChunkProvider
     {
     public:
@@ -21,6 +29,8 @@ namespace mc
 
         void Render();
 
+        HitInfo RayCast(float3 origin, float3 direction, float distance);
+        
     public:
         Chunk* GetChunk(int3 chunkID) override;
         const Chunk* GetChunk(int3 chunkID) const override;

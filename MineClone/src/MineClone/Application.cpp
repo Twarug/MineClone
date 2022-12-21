@@ -10,6 +10,10 @@
 namespace mc
 {
     Mesh g_boundaryMesh;
+
+    Mesh g_blockIndicator;
+    int3 g_blockIndicatorPos;
+    
     
     Ref<Texture> g_texture;
 
@@ -72,11 +76,15 @@ namespace mc
 
         g_boundaryMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
         g_boundaryMesh.SetVertices(std::span(verts.data(), 6ull * 4ull));
+
+        g_blockIndicator.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
+        g_blockIndicator.SetVertices(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
     }
 
     void Application::Cleanup() {
         RendererAPI::Wait();
         g_boundaryMesh.Dispose();
+        g_blockIndicator.Dispose();
         g_mat = nullptr;
         RendererAPI::DeleteTexture(g_texture);
 
@@ -115,6 +123,14 @@ namespace mc
             blockIndex = !blockIndex;
         }
 
+        float2 rot = glm::radians(m_camera->GetRot());
+        float xzLen = cos(rot.x);
+        float3 dir = {xzLen * sin(-rot.y), sin(rot.x), -xzLen * cos(rot.y)};
+        HitInfo hitInfo = m_world->RayCast(m_camera->GetPos(), dir, 10.f);
+        if(hitInfo.hit && g_blockIndicatorPos != hitInfo.blockPos)
+            g_blockIndicatorPos = hitInfo.blockPos;
+            
+        
 
         int3 currentChunkID = Chunk::ToChunkID(glm::floor(m_camera->GetPos()));
         if(currentChunkID != m_lastPlayerChunkID) {
@@ -126,6 +142,7 @@ namespace mc
     void Application::Render() {
         g_mat->Bind();
         m_world->Render();
+        g_blockIndicator.Render(glm::translate(Mat4{1.f}, float3(g_blockIndicatorPos)));
 
         if(Input::GetKey(KeyCode::B).pressed) {
             if(Chunk* chunk = m_world->GetChunk(m_lastPlayerChunkID)) {

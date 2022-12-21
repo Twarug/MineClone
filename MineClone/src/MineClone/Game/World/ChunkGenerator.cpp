@@ -10,9 +10,10 @@ namespace mc
 {
     void ChunkGenerator::Init(i32 seed) {
         s_noise = FastNoiseLite(seed);
-        // s_noise.SetFractalType(FastNoiseLite::FractalType_PingPong);
-        // s_noise.SetFrequency(1.f);        
-        // s_noise.SetFractalOctaves(6); 
+        // s_noise.SetFractalOctaves(5);
+        // s_noise.SetFractalLacunarity(1.75);
+        // s_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+        // s_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
     }
 
     void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {

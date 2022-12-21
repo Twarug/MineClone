@@ -32,6 +32,9 @@ namespace mc
         bool IsTransparent() const { return m_transparent; }
         float3 GetColor() const { return m_color; }
 
+    public:
+        bool operator==(const Block&) const = default;
+        
     private:
         bool m_transparent;
         float3 m_color;

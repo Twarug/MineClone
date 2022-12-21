@@ -24,6 +24,7 @@ namespace mc
     public:
         constexpr Identifier GetId() const;
         constexpr const std::string& GetName() const;
+        auto operator<=>(const RegistryEntry& registryEntry) const = default;
 
     private:
         Identifier m_identifier;
