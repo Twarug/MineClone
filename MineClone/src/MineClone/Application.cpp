@@ -12,7 +12,7 @@ namespace mc
     Mesh g_boundaryMesh;
 
     Mesh g_blockIndicator;
-    int3 g_blockIndicatorPos;
+    HitInfo g_blockIndicatorInfo;
     
     
     Ref<Texture> g_texture;
@@ -126,11 +126,8 @@ namespace mc
         float2 rot = glm::radians(m_camera->GetRot());
         float xzLen = cos(rot.x);
         float3 dir = {xzLen * sin(-rot.y), sin(rot.x), -xzLen * cos(rot.y)};
-        HitInfo hitInfo = m_world->RayCast(m_camera->GetPos(), dir, 10.f);
-        if(hitInfo.hit && g_blockIndicatorPos != hitInfo.blockPos)
-            g_blockIndicatorPos = hitInfo.blockPos;
-            
-        
+        g_blockIndicatorInfo = m_world->RayCast(m_camera->GetPos(), dir, 10.f);
+               
 
         int3 currentChunkID = Chunk::ToChunkID(glm::floor(m_camera->GetPos()));
         if(currentChunkID != m_lastPlayerChunkID) {
@@ -142,7 +139,8 @@ namespace mc
     void Application::Render() {
         g_mat->Bind();
         m_world->Render();
-        g_blockIndicator.Render(glm::translate(Mat4{1.f}, float3(g_blockIndicatorPos)));
+        if(g_blockIndicatorInfo.hit)
+            g_blockIndicator.Render(glm::scale(glm::translate(Mat4{1}, float3(g_blockIndicatorInfo.blockPos)), float3(1.001f)));
 
         if(Input::GetKey(KeyCode::B).pressed) {
             if(Chunk* chunk = m_world->GetChunk(m_lastPlayerChunkID)) {

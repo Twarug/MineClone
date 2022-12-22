@@ -10,6 +10,7 @@ namespace mc
         BlockState* blockState;
 
         int3 blockPos;
+        float3 hitNormal;
     };
     
     class World final : public IChunkProvider

@@ -69,24 +69,28 @@ namespace mc
         while (glm::distance(float3(blockPos), origin) < distance)
         {
             float minSideDist = std::min(sideDist.x, std::min(sideDist.y, sideDist.z));
+            float3 normal;
             
             //jump to next map square, either in x-direction, or in y-direction
             if (sideDist.x == minSideDist) {
                 sideDist.x += deltaDist.x;
                 blockPos.x += step.x;
+                normal = {-step.x, 0, 0};
             }
             else if(sideDist.y == minSideDist) {
                 sideDist.y += deltaDist.y;
                 blockPos.y += step.y;
+                normal = {0, -step.y, 0};
             } else {
                 sideDist.z += deltaDist.z;
                 blockPos.z += step.z;
+                normal = {0, 0, -step.z};
             }
             
             //Check if ray has hit a wall
             BlockState* blockState = GetBlockState(blockPos);
             if (blockState && blockState->GetBlock().GetName() != "air")
-                return {true, blockState, blockPos};
+                return {true, blockState, blockPos, normal};
         }
         
         return {};
