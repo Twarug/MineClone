@@ -127,7 +127,13 @@ namespace mc
         float xzLen = cos(rot.x);
         float3 dir = {xzLen * sin(-rot.y), sin(rot.x), -xzLen * cos(rot.y)};
         g_blockIndicatorInfo = m_world->RayCast(m_camera->GetPos(), dir, 10.f);
-               
+        if(g_blockIndicatorInfo.hit) {
+            if(Input::GetButton(MouseCode::Button0).down)
+                m_world->SetBlockState(g_blockIndicatorInfo.blockPos, BlockState());
+            else if(Input::GetButton(MouseCode::Button1).down)
+                m_world->SetBlockState(g_blockIndicatorInfo.blockPos  + int3(g_blockIndicatorInfo.hitNormal), BlockState(Block::STONE));
+        }
+        
 
         int3 currentChunkID = Chunk::ToChunkID(glm::floor(m_camera->GetPos()));
         if(currentChunkID != m_lastPlayerChunkID) {
