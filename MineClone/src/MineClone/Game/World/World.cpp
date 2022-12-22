@@ -27,42 +27,39 @@ namespace mc
 
         //length of ray from one x or y-side to next x or y-side
         float3 deltaDist = {
-            (direction.x == 0) ? 1e30 : std::abs(1 / direction.x),
-            (direction.y == 0) ? 1e30 : std::abs(1 / direction.y),
-            (direction.z == 0) ? 1e30 : std::abs(1 / direction.z),
+            direction.x == 0 ? 1e30f : std::abs(1.f / direction.x),
+            direction.y == 0 ? 1e30f : std::abs(1.f / direction.y),
+            direction.z == 0 ? 1e30f : std::abs(1.f / direction.z),
         };
-        double perpWallDist;
-
+        
         //what direction to step in x or y-direction (either +1 or -1)
         int3 step;
 
-        int side; //was a NS or a EW wall hit?
-        
         if (direction.x < 0) {
             step.x = -1;
-            sideDist.x = (origin.x - blockPos.x) * deltaDist.x;
+            sideDist.x = (origin.x - (float)blockPos.x) * deltaDist.x;
         }
         else {
             step.x = 1;
-            sideDist.x = (blockPos.x + 1.0 - origin.x) * deltaDist.x;
+            sideDist.x = ((float)blockPos.x + 1.0f - origin.x) * deltaDist.x;
         }
         
         if (direction.y < 0) {
             step.y = -1;
-            sideDist.y = (origin.y - blockPos.y) * deltaDist.y;
+            sideDist.y = (origin.y - (float)blockPos.y) * deltaDist.y;
         }
         else {
             step.y = 1;
-            sideDist.y = (blockPos.y + 1.0 - origin.y) * deltaDist.y;
+            sideDist.y = ((float)blockPos.y + 1.f - origin.y) * deltaDist.y;
         }
         
         if (direction.z < 0) {
             step.z = -1;
-            sideDist.z = (origin.z - blockPos.z) * deltaDist.z;
+            sideDist.z = (origin.z - (float)blockPos.z) * deltaDist.z;
         }
         else {
             step.z = 1;
-            sideDist.z = (blockPos.z + 1.0 - origin.z) * deltaDist.z;
+            sideDist.z = ((float)blockPos.z + 1.f - origin.z) * deltaDist.z;
         }
         
         //perform DDA
@@ -75,16 +72,16 @@ namespace mc
             if (sideDist.x == minSideDist) {
                 sideDist.x += deltaDist.x;
                 blockPos.x += step.x;
-                normal = {-step.x, 0, 0};
+                normal = {(float)-step.x, 0, 0};
             }
             else if(sideDist.y == minSideDist) {
                 sideDist.y += deltaDist.y;
                 blockPos.y += step.y;
-                normal = {0, -step.y, 0};
+                normal = {0, (float)-step.y, 0};
             } else {
                 sideDist.z += deltaDist.z;
                 blockPos.z += step.z;
-                normal = {0, 0, -step.z};
+                normal = {0, 0, (float)-step.z};
             }
             
             //Check if ray has hit a wall
