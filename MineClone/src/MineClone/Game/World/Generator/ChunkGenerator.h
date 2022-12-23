@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "ChunkColumn.h"
+#include "MineClone/Game/World/ChunkColumn.h"
 
 #include "FastNoiseLite.h"
 

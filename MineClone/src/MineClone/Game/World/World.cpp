@@ -1,7 +1,7 @@
 ﻿#include "mcpch.h"
 #include "World.h"
 
-#include "ChunkGenerator.h"
+#include "Generator/ChunkGenerator.h"
 
 namespace mc
 {

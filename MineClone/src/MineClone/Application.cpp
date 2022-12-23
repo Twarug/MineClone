@@ -2,7 +2,7 @@
 #include "Application.h"
 
 #include "Core/Input/Input.h"
-#include "Game/World/ChunkGenerator.h"
+#include "Game/World/Generator/ChunkGenerator.h"
 #include "MineClone/Core/Event/ApplicationEvents.h"
 #include "MineClone/Core/Renderer/RendererAPI.h"
 #include "MineClone/Core/Renderer/RendererTypes.h"
