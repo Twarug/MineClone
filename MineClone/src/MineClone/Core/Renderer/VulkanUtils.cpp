@@ -121,17 +121,27 @@ namespace mc::details
 
             u32 i = 0;
             for(const auto& queueFamily : queueFamilies) {
-                if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-                    indices.graphicsFamily = i;
-
                 VkBool32 presentSupport = false;
                 vkGetPhysicalDeviceSurfaceSupportKHR(device, i, state.surface, &presentSupport);
-                if(presentSupport)
+                
+                if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT && presentSupport) {
+                    if(indices.graphicsFamily != indices.presentFamily || indices.graphicsFamily == ~0u) {
+                        indices.graphicsFamily = i;
+                        indices.presentFamily = i;
+                    }
+                }
+                else if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                    indices.graphicsFamily = i;
+                else if(presentSupport)
                     indices.presentFamily = i;
+                
+
+                if(queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT && indices.transferFamily == ~0u)
+                    indices.transferFamily = i;
 
                 if(indices.IsComplete())
                     break;
-
+                
                 i++;
             }
 

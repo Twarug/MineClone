@@ -50,7 +50,8 @@ namespace mc
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size);
         static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
 
-        static void ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function);
+        static void SubmitImmediate(std::function<void(VkCommandBuffer cmd)>&& function);
+        static void SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function);
 
     private:
         static GlobalState& GetState();

@@ -118,6 +118,10 @@ namespace mc
         if(vkBeginCommandBuffer(frame.commandBuffer, &beginInfo) != VK_SUCCESS)
             throw std::runtime_error("failed to begin recording command buffer!");
 
+        for(auto& fn : g_state.nextFrameSubmits)
+            fn(frame.commandBuffer);
+        g_state.nextFrameSubmits.clear();
+        
         std::array clearColor = {
             VkClearValue{.color = {{0.46f, 0.46f, 0.46f, 1.0f}}},
             VkClearValue{.depthStencil = {1.f, 0}},
@@ -362,7 +366,7 @@ namespace mc
     }
 
     void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size) {
-        ImmediateSubmit([=](VkCommandBuffer cmd) {
+        SubmitImmediate([=](VkCommandBuffer cmd) {
             VkBufferCopy copyRegion = {
                 .srcOffset = 0, // Optional
                 .dstOffset = 0, // Optional
@@ -374,7 +378,7 @@ namespace mc
     }
 
     void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size) {
-        ImmediateSubmit([=](VkCommandBuffer cmd) {
+        SubmitImmediate([=](VkCommandBuffer cmd) {
             VkImageSubresourceRange range = {
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
                 .baseMipLevel = 0,
@@ -430,7 +434,7 @@ namespace mc
         });
     }
 
-    void RendererAPI::ImmediateSubmit(std::function<void(VkCommandBuffer cmd)>&& function) {
+    void RendererAPI::SubmitImmediate(std::function<void(VkCommandBuffer cmd)>&& function) {
         VkCommandBuffer commandBuffer = g_state.uploadContext.commandBuffer;
         VkFence fence = g_state.uploadContext.uploadFence;
 
@@ -464,13 +468,18 @@ namespace mc
 
         //submit command buffer to the queue and execute it.
         // _renderFence will now block until the graphic commands finish execution
-        if(vkQueueSubmit(g_state.graphicsQueue, 1, &submit, fence) != VK_SUCCESS)
+        if(vkQueueSubmit(g_state.transferQueue, 1, &submit, fence) != VK_SUCCESS)
             throw std::runtime_error("failed to submit draw command buffer!");
 
         vkWaitForFences(g_state.device, 1, &fence, true, std::numeric_limits<int>::max());
         vkResetFences(g_state.device, 1, &fence);
 
         vkResetCommandPool(g_state.device, g_state.uploadContext.commandPool, 0);
+    }
+
+    void RendererAPI::SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function)
+    {
+        g_state.nextFrameSubmits.push_back(std::move(function));
     }
 
     GlobalState& RendererAPI::GetState() {
@@ -601,6 +610,15 @@ namespace mc
                 .queueCount = 1,
                 .pQueuePriorities = &queuePriority
             });
+        
+        if(g_state.indices.transferFamily != g_state.indices.graphicsFamily && g_state.indices.transferFamily != g_state.indices.presentFamily)
+            // Present Queue
+            queueCreateInfos.push_back({
+                .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+                .queueFamilyIndex = g_state.indices.transferFamily,
+                .queueCount = 1,
+                .pQueuePriorities = &queuePriority
+            });
 
         VkPhysicalDeviceFeatures deviceFeatures = {};
 
@@ -628,6 +646,7 @@ namespace mc
         if(vkCreateDevice(g_state.physicalDevice, &createInfo, g_state.allocator, &g_state.device) != VK_SUCCESS)
             throw std::runtime_error("failed to create logical device!");
 
+        vkGetDeviceQueue(g_state.device, g_state.indices.transferFamily, 0, &g_state.transferQueue);
         vkGetDeviceQueue(g_state.device, g_state.indices.graphicsFamily, 0, &g_state.graphicsQueue);
         vkGetDeviceQueue(g_state.device, g_state.indices.presentFamily, 0, &g_state.presentQueue);
     }
@@ -683,12 +702,12 @@ namespace mc
             .clipped = VK_TRUE,
         };
 
-        uint32_t queueFamilyIndices[] = {g_state.indices.graphicsFamily, g_state.indices.presentFamily};
+        std::array queueFamilyIndices = {g_state.indices.graphicsFamily, g_state.indices.presentFamily };
 
         if(g_state.indices.graphicsFamily != g_state.indices.presentFamily) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            createInfo.queueFamilyIndexCount = 2;
-            createInfo.pQueueFamilyIndices = queueFamilyIndices;
+            createInfo.queueFamilyIndexCount = (u32)queueFamilyIndices.size();
+            createInfo.pQueueFamilyIndices = queueFamilyIndices.data();
         }
         else {
             createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -851,7 +870,7 @@ namespace mc
         VkCommandPoolCreateInfo uploadPoolInfo = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = g_state.indices.graphicsFamily,
+            .queueFamilyIndex = g_state.indices.transferFamily,
         };
 
         if(vkCreateCommandPool(g_state.device, &uploadPoolInfo, g_state.allocator, &g_state.uploadContext.commandPool)

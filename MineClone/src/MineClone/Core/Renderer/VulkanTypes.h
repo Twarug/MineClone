@@ -30,12 +30,14 @@ namespace mc
 
     struct QueueFamilyIndices
     {
+        u32 transferFamily = ~0u;
         u32 graphicsFamily = ~0u;
         u32 presentFamily = ~0u;
 
         bool IsComplete() const {
-            return graphicsFamily != ~0u &&
-                presentFamily != ~0u;
+            return transferFamily != ~0u &&
+                   graphicsFamily != ~0u &&
+                   presentFamily != ~0u;
         }
     };
 
@@ -71,6 +73,7 @@ namespace mc
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         VkDevice device;
 
+        VkQueue transferQueue;
         VkQueue graphicsQueue;
         VkQueue presentQueue;
 
@@ -104,6 +107,7 @@ namespace mc
         std::vector<VkExtensionProperties> extensions;
 
         UploadContext uploadContext;
+        std::vector<std::function<void(VkCommandBuffer)>> nextFrameSubmits;
 
     public:
         FrameData& GetCurrentFrame() {
