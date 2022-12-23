@@ -36,19 +36,11 @@ namespace mc
 
         static void DeleteImage(Ref<AllocatedImage> image);
 
-        template <typename Vertex>
-        static Ref<AllocatedBuffer> CreateVertexBuffer(std::span<Vertex> data);
+        static void Draw(const Mat4& transform, Ref<Buffer> vertexBuffer);
+        static void Draw(const Mat4& transform, Ref<Buffer> vertexBuffer, Ref<Buffer> indexBuffer, u32 indicesCount);
 
-        template <std::integral Index = u64>
-        static Ref<AllocatedBuffer> CreateIndexBuffer(std::span<Index> data);
-
-        static void DeleteBuffer(Ref<AllocatedBuffer> buffer);
-
-        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer);
-        static void Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount);
-
-        static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size);
-        static void CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
+        static void CopyBuffer(Ref<Buffer> srcBuffer, Ref<Buffer> dstBuffer, u64 size);
+        static void CopyBuffer(Ref<Buffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
 
         static void SubmitImmediate(std::function<void(VkCommandBuffer cmd)>&& function);
         static void SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function);
@@ -78,15 +70,11 @@ namespace mc
         static void RecreateSwapchain();
         static void CleanupSwapchain();
 
-        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, const void* data);
-        static Ref<AllocatedBuffer> CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
-
         friend details::VulkanUtils;
 
         friend class Material;
         friend class Texture;
+        friend class Buffer;
         friend class Mesh;
     };
 }
-
-#include "RendererAPI.tpp"

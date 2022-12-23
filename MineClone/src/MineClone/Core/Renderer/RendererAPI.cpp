@@ -46,7 +46,7 @@ namespace mc
         CleanupSwapchain();
 
         for(FrameData& frame : g_state.frames)
-            DeleteBuffer(frame.uboBuffer);
+            frame.uboBuffer->Delete();
 
         vkDestroyDescriptorPool(g_state.device, g_state.descriptorPool, g_state.allocator);
 
@@ -229,9 +229,7 @@ namespace mc
             throw std::runtime_error("failed to load texture image!");
 
         Ref<Texture> texture = CreateTexture(width, height);
-        Ref<AllocatedBuffer> stageBuffer = CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        Ref<Buffer> stageBuffer = Buffer::CreateStageBuffer(imageSize);
 
         void* data;
         vkMapMemory(g_state.device, stageBuffer->memory, 0, imageSize, 0, &data);
@@ -239,8 +237,6 @@ namespace mc
         vkUnmapMemory(g_state.device, stageBuffer->memory);
 
         CopyBuffer(stageBuffer, texture, imageSize);
-
-        DeleteBuffer(stageBuffer);
 
         stbi_image_free(pixels);
 
@@ -326,14 +322,7 @@ namespace mc
         *image = {};
     }
 
-    void RendererAPI::DeleteBuffer(Ref<AllocatedBuffer> buffer) {
-        vkDestroyBuffer(g_state.device, buffer->buffer, g_state.allocator);
-        vkFreeMemory(g_state.device, buffer->memory, g_state.allocator);
-
-        *buffer = {};
-    }
-
-    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer) {
+    void RendererAPI::Draw(const Mat4& transform, Ref<Buffer> vertexBuffer) {
         FrameData& frame = g_state.GetCurrentFrame();
 
         MeshPushConstants pushConstants{transform};
@@ -347,7 +336,7 @@ namespace mc
         vkCmdDraw(frame.commandBuffer, 3, 1, 0, 0);
     }
 
-    void RendererAPI::Draw(const Mat4& transform, Ref<AllocatedBuffer> vertexBuffer, Ref<AllocatedBuffer> indexBuffer, u32 indicesCount) {
+    void RendererAPI::Draw(const Mat4& transform, Ref<Buffer> vertexBuffer, Ref<Buffer> indexBuffer, u32 indicesCount) {
         FrameData& frame = g_state.GetCurrentFrame();
 
         MeshPushConstants pushConstants{transform};
@@ -365,7 +354,7 @@ namespace mc
         vkCmdDrawIndexed(frame.commandBuffer, indicesCount, 1, 0, 0, 0);
     }
 
-    void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedBuffer> dstBuffer, u64 size) {
+    void RendererAPI::CopyBuffer(Ref<Buffer> srcBuffer, Ref<Buffer> dstBuffer, u64 size) {
         SubmitImmediate([=](VkCommandBuffer cmd) {
             VkBufferCopy copyRegion = {
                 .srcOffset = 0, // Optional
@@ -377,7 +366,7 @@ namespace mc
         });
     }
 
-    void RendererAPI::CopyBuffer(Ref<AllocatedBuffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size) {
+    void RendererAPI::CopyBuffer(Ref<Buffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size) {
         SubmitImmediate([=](VkCommandBuffer cmd) {
             VkImageSubresourceRange range = {
                 .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -936,7 +925,7 @@ namespace mc
         // ReSharper disable once CppTooWideScope
         u64 bufferSize = sizeof(UniformBufferObject);
         for(FrameData& frame : g_state.frames) {
-            frame.uboBuffer = CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            frame.uboBuffer = Buffer::CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
             vkMapMemory(g_state.device, frame.uboBuffer->memory, 0, bufferSize, 0, &frame.uboBuffer->mappedMemory);
@@ -1052,47 +1041,5 @@ namespace mc
             vkDestroyImageView(g_state.device, g_state.swapchainImageViews[i], g_state.allocator);
 
         vkDestroySwapchainKHR(g_state.device, g_state.swapchain, g_state.allocator);
-    }
-
-    Ref<AllocatedBuffer> RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                                   VkMemoryPropertyFlags properties, const void* data) {
-        Ref<AllocatedBuffer> buffer = CreateBuffer(size, usage, properties);
-
-        void* mem = nullptr;
-        vkMapMemory(g_state.device, buffer->memory, 0, size, 0, &mem);
-        memcpy(mem, data, size);
-        vkUnmapMemory(g_state.device, buffer->memory);
-
-        return buffer;
-    }
-
-    Ref<AllocatedBuffer> RendererAPI::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
-                                                   VkMemoryPropertyFlags properties) {
-        Ref<AllocatedBuffer> buffer = CreateRef<AllocatedBuffer>();
-
-        VkBufferCreateInfo createInfo = {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-            .size = size,
-            .usage = usage,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-        };
-
-        vkCreateBuffer(g_state.device, &createInfo, g_state.allocator, &buffer->buffer);
-
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(g_state.device, buffer->buffer, &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{
-            .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-            .allocationSize = memRequirements.size,
-            .memoryTypeIndex = details::VulkanUtils::FindMemoryType(memRequirements.memoryTypeBits, properties),
-        };
-
-        if(vkAllocateMemory(g_state.device, &allocInfo, g_state.allocator, &buffer->memory) != VK_SUCCESS)
-            throw std::runtime_error("failed to allocate vertex buffer memory!");
-
-        vkBindBufferMemory(g_state.device, buffer->buffer, buffer->memory, 0);
-
-        return buffer;
     }
 }

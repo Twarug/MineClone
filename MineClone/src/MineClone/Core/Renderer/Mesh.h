@@ -19,8 +19,8 @@ namespace mc
         void Dispose();
         
     private:
-        Ref<AllocatedBuffer> m_vertexBuffer;
-        Ref<AllocatedBuffer> m_indexBuffer;
+        Ref<Buffer> m_vertexBuffer;
+        Ref<Buffer> m_indexBuffer;
         u64 m_vertexBufferCap = 0;
         u64 m_indexBufferCap = 0;
 

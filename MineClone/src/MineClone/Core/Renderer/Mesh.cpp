@@ -3,8 +3,6 @@
 
 #include "RendererAPI.h"
 
-#include <vulkan/vulkan.h>
-
 namespace mc
 {
     Mesh::~Mesh() {
@@ -21,20 +19,15 @@ namespace mc
 
         if(m_indexBufferCap < newCount) {
             // Create/recreate buffer
-            if(m_indexBufferCap > 0)
-                RendererAPI::DeleteBuffer(m_indexBuffer);
-                
-            m_indexBuffer = RendererAPI::CreateIndexBuffer(indices);
+            m_indexBuffer = Buffer::CreateIndexBuffer(indices);
             m_indexBufferCap = newCount;
         }
         else if(newCount > 0) {
             // Update Data
             u64 size = newCount * sizeof(u32);
-            auto stageBuffer = RendererAPI::CreateBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indices.data());
+            auto stageBuffer = Buffer::CreateStageBuffer(size, indices.data());
 
             RendererAPI::CopyBuffer(stageBuffer, m_indexBuffer, size);
-
-            RendererAPI::DeleteBuffer(stageBuffer);
         }
 
         m_indicesCount = newCount;
@@ -42,10 +35,10 @@ namespace mc
 
     void Mesh::Dispose() {
         if(m_indexBuffer)
-            RendererAPI::DeleteBuffer(m_indexBuffer);
+            m_indexBuffer->Delete();
 
         if(m_vertexBuffer)
-            RendererAPI::DeleteBuffer(m_vertexBuffer);
+            m_vertexBuffer->Delete();
 
         m_indexBuffer = nullptr;
         m_vertexBuffer = nullptr;

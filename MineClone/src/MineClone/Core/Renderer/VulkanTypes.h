@@ -61,7 +61,7 @@ namespace mc
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
-        Ref<AllocatedBuffer> uboBuffer;
+        Ref<Buffer> uboBuffer;
     };
 
     struct GlobalState
