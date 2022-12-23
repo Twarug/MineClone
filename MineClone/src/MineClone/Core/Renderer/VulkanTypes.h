@@ -60,12 +60,6 @@ namespace mc
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
         Ref<AllocatedBuffer> uboBuffer;
-
-
-        // VkDescriptorSet descriptor = VK_NULL_HANDLE;
-
-        // AllocatedBuffer objectBuffer{};
-        // VkDescriptorSet objectDescriptor = VK_NULL_HANDLE;
     };
 
     struct GlobalState
@@ -87,8 +81,6 @@ namespace mc
         VkDescriptorPool descriptorPool;
 
         VkRenderPass renderPass;
-        // VkPipelineLayout pipelineLayout;
-        // VkPipeline graphicsPipeline;
 
         std::vector<VkImage> swapchainImages;
         std::vector<VkImageView> swapchainImageViews;

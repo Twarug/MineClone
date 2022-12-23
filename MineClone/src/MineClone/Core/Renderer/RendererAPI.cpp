@@ -31,11 +31,8 @@ namespace mc
         CreateRenderPass();
 
         CreateUniformBuffers();
-        // CreateDescriptorSetLayout();
         CreateDescriptorPool();
-        // CreateDescriptorSets();
-
-        // CreateGraphicsPipeline();
+        
         CreateFramebuffers();
         CreateCommandPool();
         CreateCommandBuffers();
@@ -540,8 +537,7 @@ namespace mc
                 .pUserData = nullptr // Optional
             };
 
-            auto func = PFN_vkCreateDebugUtilsMessengerEXT(
-                vkGetInstanceProcAddr(g_state.instance, "vkCreateDebugUtilsMessengerEXT"));
+            auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(g_state.instance, "vkCreateDebugUtilsMessengerEXT");
             if(func != nullptr)
                 func(g_state.instance, &createInfo, g_state.allocator, &g_state.debugMessenger);
             else
@@ -795,35 +791,6 @@ namespace mc
             throw std::runtime_error("failed to create render pass!");
     }
 
-    // void RendererAPI::CreateDescriptorSetLayout()
-    // {        
-    //     VkDescriptorSetLayoutBinding uboLayoutBinding = {
-    //         .binding = 0,
-    //         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    //         .descriptorCount = 1,
-    //         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-    //         .pImmutableSamplers = nullptr,
-    //     };
-    //     
-    //     VkDescriptorSetLayoutBinding samplerLayoutBinding = {
-    //         .binding = 1,
-    //         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-    //         .descriptorCount = 1,
-    //         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-    //         .pImmutableSamplers = nullptr,
-    //     };
-    //     
-    //     std::array bindings = {uboLayoutBinding, samplerLayoutBinding};
-    //     VkDescriptorSetLayoutCreateInfo layoutInfo {
-    //         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-    //         .bindingCount = (u32)bindings.size(),
-    //         .pBindings = bindings.data(),
-    //     };
-    //     
-    //     if (vkCreateDescriptorSetLayout(g_state.device, &layoutInfo, g_state.allocator, &g_state.descriptorSetLayout) != VK_SUCCESS)
-    //         throw std::runtime_error("failed to create descriptor set layout!");
-    // }
-
     void RendererAPI::CreateDescriptorPool() {
         std::vector<VkDescriptorPoolSize> poolSizes = {
             {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10},
@@ -842,209 +809,6 @@ namespace mc
         if(vkCreateDescriptorPool(g_state.device, &poolInfo, g_state.allocator, &g_state.descriptorPool) != VK_SUCCESS)
             throw std::runtime_error("failed to create descriptor pool!");
     }
-
-    // void RendererAPI::CreateDescriptorSets()
-    // {
-    //     std::vector layouts(FrameData::MAX_FRAMES_IN_FLIGHT, g_state.descriptorSetLayout);
-    //     VkDescriptorSetAllocateInfo allocInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-    //         .descriptorPool = g_state.descriptorPool,
-    //         .descriptorSetCount = 1,
-    //         .pSetLayouts = layouts.data(),
-    //     };
-    //     
-    //     for(FrameData& frame : g_state.frames) {
-    //         if (vkAllocateDescriptorSets(g_state.device, &allocInfo, &frame.descriptor) != VK_SUCCESS)
-    //             throw std::runtime_error("failed to allocate descriptor sets!");
-    //         
-    //         VkDescriptorBufferInfo bufferInfo = {
-    //             .buffer = frame.uboBuffer->buffer,
-    //             .offset = 0,
-    //             .range = sizeof(UniformBufferObject),
-    //         };
-    //     
-    //         VkWriteDescriptorSet descriptorWrite = {
-    //             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-    //             .dstSet = frame.descriptor,
-    //             .dstBinding = 0,
-    //             .dstArrayElement = 0,
-    //             .descriptorCount = 1,
-    //             .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-    //             .pImageInfo = nullptr,
-    //             .pBufferInfo = &bufferInfo,
-    //             .pTexelBufferView = nullptr,
-    //         };
-    //         
-    //         vkUpdateDescriptorSets(g_state.device, 1, &descriptorWrite, 0, nullptr);
-    //     }
-    // }
-
-    // void RendererAPI::CreateGraphicsPipeline()
-    // {
-    //     Graphics Pipeline
-    //     auto vertShaderCode = details::ReadFile("assets/shaders/shader.vert.spv");
-    //     auto fragShaderCode = details::ReadFile("assets/shaders/shader.frag.spv");
-    //     
-    //     VkShaderModule vertShaderModule = details::CreateShaderModule(vertShaderCode);
-    //     VkShaderModule fragShaderModule = details::CreateShaderModule(fragShaderCode);
-    //     
-    //     VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-    //         .stage = VK_SHADER_STAGE_VERTEX_BIT,
-    //         .module = vertShaderModule,
-    //         .pName = "main",
-    //     };
-    //     
-    //     VkPipelineShaderStageCreateInfo fragShaderStageInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-    //         .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-    //         .module = fragShaderModule,
-    //         .pName = "main",
-    //     };
-    //     
-    //     VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-    //     
-    //     std::vector dynamicStates = {
-    //         VK_DYNAMIC_STATE_VIEWPORT,
-    //         VK_DYNAMIC_STATE_SCISSOR
-    //     };
-    //     
-    //     VkPipelineDynamicStateCreateInfo dynamicState = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
-    //         .dynamicStateCount = static_cast<u32>(dynamicStates.size()),
-    //         .pDynamicStates = dynamicStates.data(),
-    //     };
-    //     
-    //     auto bindingDescription = Vertex3D::GetBindingDescription();
-    //     auto attributeDescriptions = Vertex3D::GetAttributeDescriptions();
-    //     
-    //     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-    //         .vertexBindingDescriptionCount = 1,
-    //         .pVertexBindingDescriptions = &bindingDescription,
-    //         .vertexAttributeDescriptionCount = static_cast<u32>(attributeDescriptions.size()),
-    //         .pVertexAttributeDescriptions = attributeDescriptions.data(),
-    //     };
-    //     
-    //     VkPipelineInputAssemblyStateCreateInfo inputAssembly = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-    //         .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-    //         .primitiveRestartEnable = VK_FALSE,
-    //     };
-    //     
-    //     VkViewport viewport = {
-    //         .x = 0.0f,
-    //         .y = 0.0f,
-    //         .width = static_cast<float>(g_state.swapchainExtent.width),
-    //         .height = static_cast<float>(g_state.swapchainExtent.height),
-    //         .minDepth = 0.0f,
-    //         .maxDepth = 1.0f,
-    //     };
-    //     
-    //     VkRect2D scissor = {
-    //         .offset = {0, 0},
-    //         .extent = g_state.swapchainExtent,
-    //     };
-    //     
-    //     VkPipelineViewportStateCreateInfo viewportState = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-    //         .viewportCount = 1,
-    //         .pViewports = &viewport,
-    //         .scissorCount = 1,
-    //         .pScissors = &scissor,
-    //     };
-    //     
-    //     VkPipelineRasterizationStateCreateInfo rasterizer = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-    //         .depthClampEnable = VK_FALSE,
-    //         .rasterizerDiscardEnable = VK_FALSE,
-    //         .polygonMode = VK_POLYGON_MODE_FILL,
-    //         
-    //         .cullMode = VK_CULL_MODE_BACK_BIT,
-    //         .frontFace = VK_FRONT_FACE_CLOCKWISE,
-    //         
-    //         .depthBiasEnable = VK_FALSE,
-    //         .depthBiasConstantFactor = 0.0f, // Optional
-    //         .depthBiasClamp = 0.0f, // Optional
-    //         .depthBiasSlopeFactor = 0.0f, // Optional
-    //         
-    //         .lineWidth = 1.0f,
-    //     };
-    //     
-    //     VkPipelineMultisampleStateCreateInfo multisampling = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-    //         .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
-    //         .sampleShadingEnable = VK_FALSE,
-    //         .minSampleShading = 1.0f, // Optional
-    //         .pSampleMask = nullptr, // Optional
-    //         .alphaToCoverageEnable = VK_FALSE, // Optional
-    //         .alphaToOneEnable = VK_FALSE, // Optional
-    //     };
-    //     
-    //     VkPipelineColorBlendAttachmentState colorBlendAttachment{
-    //         .blendEnable = VK_TRUE,
-    //         .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-    //         .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-    //         .colorBlendOp = VK_BLEND_OP_ADD,
-    //         .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-    //         .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-    //         .alphaBlendOp = VK_BLEND_OP_ADD,
-    //         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-    //     };
-    //     
-    //     VkPipelineColorBlendStateCreateInfo colorBlending = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-    //         .logicOpEnable = VK_FALSE,
-    //         .logicOp = VK_LOGIC_OP_COPY, // Optional
-    //         .attachmentCount = 1,
-    //         .pAttachments = &colorBlendAttachment,
-    //         .blendConstants = {
-    //             0.0f, 0.0f, 0.0f, 0.0f,
-    //         }, // Optional
-    //     };
-    //     
-    //     VkPushConstantRange pushConstant = {
-    //         .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-    //         .offset = 0,
-    //         .size = sizeof(MeshPushConstants),
-    //     };
-    //     
-    //     VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    //         .setLayoutCount = 1,
-    //         .pSetLayouts = &g_state.descriptorSetLayout,
-    //         .pushConstantRangeCount = 1,
-    //         .pPushConstantRanges = &pushConstant,
-    //     };
-    //     
-    //     if (vkCreatePipelineLayout(g_state.device, &pipelineLayoutInfo, g_state.allocator, &g_state.pipelineLayout) != VK_SUCCESS)
-    //         throw std::runtime_error("failed to create pipeline layout!");
-    //     
-    //     VkGraphicsPipelineCreateInfo pipelineInfo = {
-    //         .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-    //         .stageCount = 2,
-    //         .pStages = shaderStages,
-    //         .pVertexInputState = &vertexInputInfo,
-    //         .pInputAssemblyState = &inputAssembly,
-    //         .pViewportState = &viewportState,
-    //         .pRasterizationState = &rasterizer,
-    //         .pMultisampleState = &multisampling,
-    //         .pDepthStencilState = nullptr, // Optional
-    //         .pColorBlendState = &colorBlending,
-    //         .pDynamicState = &dynamicState,
-    //         .layout = g_state.pipelineLayout,
-    //         .renderPass = g_state.renderPass,
-    //         .subpass = 0,
-    //         .basePipelineHandle = VK_NULL_HANDLE, // Optional
-    //         .basePipelineIndex = -1, // Optional
-    //     };
-    //     
-    //     if (vkCreateGraphicsPipelines(g_state.device, VK_NULL_HANDLE, 1, &pipelineInfo, g_state.allocator, &g_state.graphicsPipeline) != VK_SUCCESS)
-    //         throw std::runtime_error("failed to create graphics pipeline!");
-    //     
-    //     vkDestroyShaderModule(g_state.device, fragShaderModule, g_state.allocator);
-    //     vkDestroyShaderModule(g_state.device, vertShaderModule, g_state.allocator);
-    // }
 
     void RendererAPI::CreateFramebuffers() {
         u64 imageCount = g_state.swapchainImageViews.size();
@@ -1239,7 +1003,7 @@ namespace mc
 
     void RendererAPI::RecreateSwapchain() {
         int width = 0, height = 0;
-        GLFWwindow* window = static_cast<GLFWwindow*>(Application::Get().GetMainWindow().GetNativeWindow());
+        auto* window = (GLFWwindow*)Application::Get().GetMainWindow().GetNativeWindow();
         glfwGetFramebufferSize(window, &width, &height);
         while(width == 0 || height == 0) {
             glfwGetFramebufferSize(window, &width, &height);

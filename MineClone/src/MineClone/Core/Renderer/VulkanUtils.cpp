@@ -13,8 +13,7 @@ namespace mc::details
         VkDebugUtilsMessageTypeFlagsEXT messageType,
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void* pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
-
+        std::cerr << "validation layer (" << messageSeverity << "): " << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 
@@ -179,7 +178,7 @@ namespace mc::details
         std::vector<byte> buffer(fileSize);
 
         file.seekg(0);
-        file.read(static_cast<char*>(static_cast<void*>(buffer.data())), fileSize);
+        file.read(static_cast<char*>(static_cast<void*>(buffer.data())), (std::streamsize)fileSize);
 
         file.close();
 

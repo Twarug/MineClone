@@ -64,10 +64,7 @@ namespace mc
         static void CreateSwapchain();
         static void CreateImageViews();
         static void CreateRenderPass();
-        // static void CreateDescriptorSetLayout();
         static void CreateDescriptorPool();
-        // static void CreateDescriptorSets();
-        // static void CreateGraphicsPipeline();
         static void CreateFramebuffers();
         static void CreateCommandPool();
         static void CreateCommandBuffers();
