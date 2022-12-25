@@ -16,8 +16,10 @@ namespace mc
     
     
     Ref<Texture> g_texture;
-
     Ref<Material> g_mat;
+
+    Ref<Texture> g_atlas;
+    Ref<Material> g_chunkMaterial;
 
     Application::Application(std::string_view name)
         : name(name), m_isRunning(false) {
@@ -56,7 +58,11 @@ namespace mc
         auto des = Vertex3D::GetDescription();
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
-
+        
+        g_atlas = RendererAPI::LoadTexture("assets/atlas.png");
+        g_chunkMaterial = Material::Create("chunk", des);
+        g_chunkMaterial->SetTexture(g_atlas);
+        
         // Game
 
         ChunkGenerator::Init(2137);
@@ -87,6 +93,8 @@ namespace mc
         g_blockIndicator.Dispose();
         g_mat = nullptr;
         RendererAPI::DeleteTexture(g_texture);
+        g_chunkMaterial = nullptr;
+        RendererAPI::DeleteTexture(g_atlas);
 
         m_world.reset(nullptr);
         
@@ -143,8 +151,10 @@ namespace mc
     }
 
     void Application::Render() {
-        g_mat->Bind();
+        g_chunkMaterial->Bind();
         m_world->Render();
+
+        g_mat->Bind();
         if(g_blockIndicatorInfo.hit)
             g_blockIndicator.Render(glm::scale(glm::translate(Mat4{1}, float3(g_blockIndicatorInfo.blockPos)), float3(1.001f)));
 
