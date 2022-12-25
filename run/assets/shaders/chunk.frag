@@ -16,6 +16,7 @@ float map(float value, float min1, float max1, float min2, float max2) {
 
 void main() {
     outColor = texture(texSampler, inUV) * vec4(inColor, 1);
+    //outColor = vec4(inUV, 0, 1);
 
     outColor.rgb *= dot(normalize(inNormal), lightDir) / 4 + .75;
 }

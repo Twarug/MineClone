@@ -59,7 +59,7 @@ namespace mc
         g_mat = Material::Create("default", des);
         g_mat->SetTexture(g_texture);
         
-        g_atlas = RendererAPI::LoadTexture("assets/atlas.png");
+        g_atlas = RendererAPI::LoadTexture("assets/atlas.png", VK_FILTER_NEAREST);
         g_chunkMaterial = Material::Create("chunk", des);
         g_chunkMaterial->SetTexture(g_atlas);
         
@@ -85,6 +85,9 @@ namespace mc
 
         g_blockIndicator.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
         g_blockIndicator.SetVertices(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
+
+        for(const Block* block : Block::REGISTRY | std::views::values)
+            std::cout << block->GetName() << " " << to_string(block->GetTextureUVs(Facing::UP)) << "\n";
     }
 
     void Application::Cleanup() {
@@ -122,14 +125,7 @@ namespace mc
         }
 
         m_camera->Update(m_deltaTime);
-
-        static float timer = 0.f;
-        static bool blockIndex = 0;
-        if((timer += m_deltaTime) > 5.f) {
-            timer -= 5.f;
-            m_world->SetBlockState({16, 18, 16}, BlockState(blockIndex ? Block::DIRT : Block::STONE));
-            blockIndex = !blockIndex;
-        }
+        
 
         float2 rot = glm::radians(m_camera->GetRot());
         float xzLen = cos(rot.x);

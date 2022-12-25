@@ -21,6 +21,11 @@ namespace mc
 
         constexpr const T& GetByID(Identifier id);
 
+
+    public:
+        constexpr auto begin() const { return m_registry.begin(); }
+        constexpr auto end() const { return m_registry.end(); }
+
     private:
         std::map<Identifier, T*> m_registry{};
     };

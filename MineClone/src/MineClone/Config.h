@@ -21,7 +21,7 @@ namespace mc
 
         static constexpr ulong2 TEXTURE_SIZE = {16, 16};
         
-        static constexpr ulong2 ATLAS_SIZE = {2, 2};
+        static constexpr ulong2 ATLAS_SIZE = {16, 16};
         static constexpr float2 ATLAS_ELEMENT_SIZE = {1.f / ATLAS_SIZE.x, 1.f / ATLAS_SIZE.y};
 
         

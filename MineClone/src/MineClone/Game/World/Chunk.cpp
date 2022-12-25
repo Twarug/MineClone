@@ -34,8 +34,6 @@ namespace mc
 
                     if(current.GetBlock().IsTransparent())
                         continue;
-
-                    float3 color = current.GetBlock().GetColor();
                     
                     for(u64 i = 0; i < Facing::FACINGS.size(); i++) {
                         int3 neighbourPos = chunkPos + Facing::FACINGS[i].directionVec;
@@ -52,10 +50,19 @@ namespace mc
                            !neighbour && chunkPos.y == Config::CHUNK_SIZE.y - 1) {
                             auto face = Config::VERTICES[i];
                             u32 firstVertexIndex = (u32)vertices.size();
-                            
+
+                            float4 uvRect = current.GetBlock().GetTextureUVs(Facing::FACINGS[i]);
+                            std::array<float2, 4> uvs = {{
+                                uvRect.xy,
+                                uvRect.zy,
+                                uvRect.xw,
+                                uvRect.zw
+                            }};
+
+                            int vIndex = 0;
                             for(Vertex3D v : face) {
                                 v.pos += chunkPos;
-                                v.color = color;
+                                v.uv = uvs[vIndex++];
                                 vertices.push_back(v);
                             }
                             
