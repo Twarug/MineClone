@@ -85,9 +85,6 @@ namespace mc
 
         g_blockIndicator.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
         g_blockIndicator.SetVertices(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
-
-        for(const Block* block : Block::REGISTRY | std::views::values)
-            std::cout << block->GetName() << " " << to_string(block->GetTextureUVs(Facing::UP)) << "\n";
     }
 
     void Application::Cleanup() {

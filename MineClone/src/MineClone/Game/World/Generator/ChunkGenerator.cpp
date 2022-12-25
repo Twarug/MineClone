@@ -18,9 +18,11 @@ namespace mc
 
     void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {
 
-        // std::cout << "New player pos: " << to_string(currentChunkID) << '\n';
-        
-        std::ranges::for_each(Config::CHUNK_RENDER_PATTERN, [&world, currentChunkID](int3 relative) {
+        using namespace std::chrono;
+        auto start = high_resolution_clock::now();  
+
+        int chunkCount = 0;
+        std::for_each(std::execution::unseq, Config::CHUNK_RENDER_PATTERN.begin(), Config::CHUNK_RENDER_PATTERN.end(), [&chunkCount, &world, currentChunkID](int3 relative) {
             int3 chunkID = currentChunkID + relative;
             if(IsOutsideWorld(chunkID))
                 return;
@@ -38,6 +40,7 @@ namespace mc
                 
             Chunk& chunk = CreateChunk(*column, chunkID);
             GenerateChunk(chunk);
+            chunkCount++;
             chunk.UpdateMesh();
             for(const Facing& face : Facing::FACINGS) {
                 int3 neighbourChunkID = chunkID + face.directionVec;
@@ -45,6 +48,9 @@ namespace mc
                     neighbour->UpdateMesh();
             }
         });
+
+        
+        std::cout << "Generation of " << chunkCount << " chunks for player at chunkID: " << to_string(currentChunkID) << ", took " << duration_cast<milliseconds>(high_resolution_clock::now() - start) << '\n';
     }
 
     void ChunkGenerator::GenerateChunk(Chunk& chunk) {
@@ -57,10 +63,16 @@ namespace mc
             for(i32 x = 0; x < Config::CHUNK_SIZE.x; x++) {
                 i32 height = column.m_heightMap[x + z * Config::CHUNK_SIZE.x] - chunk.m_id.y * Config::CHUNK_SIZE.y;
                 for(i32 y = 0; y < Config::CHUNK_SIZE.y; y++) {
+                    const Block* block = &Block::AIR;
                     if(y == height)
-                        chunk.m_blockStates[Chunk::ToIndex({x, y, z})] = BlockState(Block::DIRT);
+                        block = &Block::GRASS_BLOCK;
                     else if(y < height)
-                        chunk.m_blockStates[Chunk::ToIndex({x, y, z})] = BlockState(Block::STONE);
+                        if (y >= height - 3)
+                            block = &Block::DIRT;
+                        else
+                            block = &Block::STONE;
+                            
+                    chunk.m_blockStates[Chunk::ToIndex({x, y, z})] = BlockState(*block);
                 }
             }
     }
