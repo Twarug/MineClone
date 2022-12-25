@@ -26,8 +26,8 @@ namespace mc
         static void Resize(u32 width, u32 height);
 
 
-        static Ref<Texture> LoadTexture(const std::string& filePath);
-        static Ref<Texture> CreateTexture(u32 width, u32 height, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
+        static Ref<Texture> LoadTexture(const std::string& filePath, VkFilter filter = VK_FILTER_LINEAR);
+        static Ref<Texture> CreateTexture(u32 width, u32 height, VkFilter filter = VK_FILTER_LINEAR, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB);
 
         static void DeleteTexture(Ref<Texture> texture);
 

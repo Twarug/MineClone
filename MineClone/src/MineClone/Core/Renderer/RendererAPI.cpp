@@ -218,7 +218,7 @@ namespace mc
         g_state.swapchainNeedsRecreation = true;
     }
 
-    Ref<Texture> RendererAPI::LoadTexture(const std::string& filePath) {
+    Ref<Texture> RendererAPI::LoadTexture(const std::string& filePath, VkFilter filter) {
         i32 width, height, texChannels;
 
         stbi_set_flip_vertically_on_load(true);
@@ -228,7 +228,7 @@ namespace mc
         if(!pixels)
             throw std::runtime_error("failed to load texture image!");
 
-        Ref<Texture> texture = CreateTexture(width, height);
+        Ref<Texture> texture = CreateTexture(width, height, filter);
         Ref<Buffer> stageBuffer = Buffer::CreateStageBuffer(imageSize);
 
         void* data;
@@ -243,7 +243,7 @@ namespace mc
         return texture;
     }
 
-    Ref<Texture> RendererAPI::CreateTexture(u32 width, u32 height, VkFormat format) {
+    Ref<Texture> RendererAPI::CreateTexture(u32 width, u32 height, VkFilter filter, VkFormat format) {
         Ref<Texture> texture = CreateRef<Texture>();
 
         CreateImage(texture, width, height, format, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -273,8 +273,8 @@ namespace mc
 
         VkSamplerCreateInfo samplerInfo = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-            .magFilter = VK_FILTER_LINEAR,
-            .minFilter = VK_FILTER_LINEAR,
+            .magFilter = filter,
+            .minFilter = filter,
             .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
             .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
             .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
