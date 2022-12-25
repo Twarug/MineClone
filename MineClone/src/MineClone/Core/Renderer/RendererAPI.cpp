@@ -691,7 +691,7 @@ namespace mc
             .clipped = VK_TRUE,
         };
 
-        std::array queueFamilyIndices = {g_state.indices.graphicsFamily, g_state.indices.presentFamily };
+        std::array queueFamilyIndices = {g_state.indices.graphicsFamily, g_state.indices.presentFamily};
 
         if(g_state.indices.graphicsFamily != g_state.indices.presentFamily) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -809,7 +809,7 @@ namespace mc
 
         VkDescriptorPoolCreateInfo poolInfo = {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-            .maxSets = static_cast<u32>(FrameData::MAX_FRAMES_IN_FLIGHT),
+            .maxSets = 100,
             .poolSizeCount = static_cast<u32>(poolSizes.size()),
             .pPoolSizes = poolSizes.data(),
         };
@@ -838,8 +838,7 @@ namespace mc
                 .layers = 1,
             };
 
-            if(vkCreateFramebuffer(g_state.device, &framebufferInfo, g_state.allocator,
-                                   &g_state.swapchainFramebuffers[i]) != VK_SUCCESS)
+            if(vkCreateFramebuffer(g_state.device, &framebufferInfo, g_state.allocator, &g_state.swapchainFramebuffers[i]) != VK_SUCCESS)
                 throw std::runtime_error("failed to create framebuffer!");
         }
     }
