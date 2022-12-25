@@ -18,10 +18,12 @@ namespace mc
         static const Block& AIR;
         static const Block& STONE;
         static const Block& DIRT;
+        static const Block& GRASS_BLOCK;
         static const Block& OAK_LOG;
 
     protected:
-        Block(const std::string& name, int textureIndex, bool transparent = false);
+        Block(const std::string& name, u64 textureIndex, bool transparent = false);
+        Block(const std::string& name, std::array<u64, 6> textureIndexes, bool transparent = false);
 
     public:
         virtual void Tick(World& world, int3 pos, BlockState& blockState) const {}
@@ -33,7 +35,7 @@ namespace mc
         bool IsTransparent() const { return m_transparent; }
         
     private:
-        u64 m_textureIndex;
+        std::array<u64, 6> m_textureIndexes;
         bool m_transparent;
     };
 }
