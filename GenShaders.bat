@@ -1,8 +1,7 @@
-@Prompt $G
+@echo off
 pushd run\assets\shaders
 
-%VULKAN_SDK%\Bin\glslc.exe default.vert -o default.vert.spv
-%VULKAN_SDK%\Bin\glslc.exe default.frag -o default.frag.spv
+powershell foreach ($file in (Get-ChildItem *.frag)) { echo "-------------------------"; echo "Compiling: $file.Name"; glslc.exe $file -c }
+powershell foreach ($file in (Get-ChildItem *.vert)) { echo "-------------------------"; echo "Compiling: $file.Name"; glslc.exe $file -c }
 
 popd
-PAUSE
