@@ -14,7 +14,7 @@ namespace mc
     class Config
     {
     public:
-        static constexpr ulong3 WORLD_SIZE = {10, 5, 10};
+        static constexpr ulong3 WORLD_SIZE = {100, 16, 100};
         static constexpr int3 CHUNK_SIZE = {16, 16, 16};
 
         static constexpr u64 RENDER_DISTANCE = 1;

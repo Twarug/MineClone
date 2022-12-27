@@ -2,18 +2,22 @@
 #include "ChunkGenerator.h"
 
 #include <execution>
-#include <random>
 
 #include "MineClone/Game/World/World.h"
 
 namespace mc
 {
+    NoiseGenerator ChunkGenerator::s_noise{0};
+    
     void ChunkGenerator::Init(i32 seed) {
-        s_noise = FastNoiseLite(seed);
-        // s_noise.SetFractalOctaves(5);
-        // s_noise.SetFractalLacunarity(1.75);
-        // s_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        // s_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+        s_noise = NoiseGenerator(seed);
+        s_noise.SetParameters({
+            .octaves = 5,
+            .amplitude = 120,
+            .smoothness = 1035,
+            .heightOffset = 0,
+            .roughness = 0.75f,
+        });
     }
 
     void ChunkGenerator::UpdatePlayer(World& world, int3 currentChunkID) {
@@ -71,7 +75,7 @@ namespace mc
                             block = &Block::DIRT;
                         else
                             block = &Block::STONE;
-                            
+
                     chunk.m_blockStates[Chunk::ToIndex({x, y, z})] = BlockState(*block);
                 }
             }
@@ -84,10 +88,10 @@ namespace mc
     }
 
     void ChunkGenerator::GenerateHeightMap(ChunkColumn& chunkColumn) {
-        int2 chunkPos = chunkColumn.m_id * Config::CHUNK_SIZE.xz;
+        int2 chunkID = chunkColumn.m_id;
         for(i32 z = 0; z < Config::CHUNK_SIZE.z; z++)
             for(i32 x = 0; x < Config::CHUNK_SIZE.x; x++)
-                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = (i32)(10.f + s_noise.GetNoise((float)(chunkPos.x + x), (float)(chunkPos.y + z)) * 10.f);
+                chunkColumn.m_heightMap[x + z * Config::CHUNK_SIZE.x] = (i32)s_noise.GetHeight(x, z, chunkID.x, chunkID.y);
     }
 
     bool ChunkGenerator::IsOutsideWorld(int3 chunkID) {

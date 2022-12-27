@@ -12,7 +12,7 @@ namespace mc
     Player::Player(World& world)
         : m_world(world), m_camera(60.f, 1280, 720) {
         
-        m_camera.SetPosition({0, 15, 30});
+        m_camera.SetPosition({0, 150, 30});
         m_camera.SetRotation({-30, 0});
 
         m_blockIndicator.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
