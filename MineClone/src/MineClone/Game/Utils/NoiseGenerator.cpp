@@ -31,7 +31,7 @@ namespace mc
 
     f32 NoiseGenerator::GetNoise(f32 x, f32 z) const noexcept
     {
-        return GetNoise((i32)(x + z * 57.0));
+        return GetNoise((i32)(x + z * 57.0f));
     }
 
     f32 NoiseGenerator::Lerp(f32 a, f32 b, f32 z) const noexcept
@@ -45,13 +45,10 @@ namespace mc
         f32 floorX = (f32)(i32)x; // This is kinda a cheap way to floor a float integer.
         f32 floorZ = (f32)(i32)z;
 
-        f32 s = 0.f, t = 0.f, u = 0.f,
-             v = 0.f; // Integer declaration
-
-        s = GetNoise(floorX, floorZ);
-        t = GetNoise(floorX + 1, floorZ);
-        u = GetNoise(floorX, floorZ + 1); // Get the surrounding values to calculate the transition.
-        v = GetNoise(floorX + 1, floorZ + 1);
+        f32 s = GetNoise(floorX, floorZ);
+        f32 t = GetNoise(floorX + 1, floorZ);
+        f32 u = GetNoise(floorX, floorZ + 1); // Get the surrounding values to calculate the transition.
+        f32 v = GetNoise(floorX + 1, floorZ + 1);
 
         auto rec1 = Lerp(s, t, x - floorX); // Interpolate between the values.
         auto rec2 = Lerp(u, v, x - floorX); // Here we use x-floorX, to get 1st dimension. Don't mind
@@ -75,10 +72,10 @@ namespace mc
         {
             f32 frequency = (f32)std::pow(2.f, a); // This increases the frequency with every loop of the octave.
             f32 amplitude = (f32)std::pow(m_noiseParameters.roughness, a); // This decreases the amplitude with every loop of the octave.
-            totalValue += Noise(((f32)newX) * frequency / m_noiseParameters.smoothness, ((f32)newZ) * frequency / m_noiseParameters.smoothness) * amplitude;
+            totalValue += Noise(((f32)newX) * frequency / (f32)m_noiseParameters.smoothness, ((f32)newZ) * frequency / (f32)m_noiseParameters.smoothness) * amplitude;
         }
 
-        f32 val = (((totalValue / 2.1f) + 1.2f) * m_noiseParameters.amplitude) + m_noiseParameters.heightOffset;
+        f32 val = (((totalValue / 2.1f) + 1.2f) * (f32)m_noiseParameters.amplitude) + (f32)m_noiseParameters.heightOffset;
 
         return val > 0 ? val : 1;
     }
