@@ -8,8 +8,9 @@ namespace mc
 {
     const Block& Block::AIR = REGISTRY.Register(new Block("air", -1, true));
     const Block& Block::STONE = REGISTRY.Register(new Block("stone", 1));
-    const Block& Block::DIRT = REGISTRY.Register(new Block("dirt", 2));
     const Block& Block::GRASS_BLOCK = REGISTRY.Register(new Block("grass_block", {{0, 2, 3, 3, 3, 3}}));
+    const Block& Block::DIRT = REGISTRY.Register(new Block("dirt", 2));
+    const Block& Block::SAND = REGISTRY.Register(new Block("sand", 18));
     const Block& Block::OAK_LOG = REGISTRY.Register(new Block("oak_log", {{20, 20, 21, 21, 21, 21}}));
 
     Block::Block(const std::string& name, u64 textureIndex, bool transparent)

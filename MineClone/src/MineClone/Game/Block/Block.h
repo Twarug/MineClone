@@ -17,8 +17,9 @@ namespace mc
 
         static const Block& AIR;
         static const Block& STONE;
-        static const Block& DIRT;
         static const Block& GRASS_BLOCK;
+        static const Block& DIRT;
+        static const Block& SAND;
         static const Block& OAK_LOG;
 
     protected:
