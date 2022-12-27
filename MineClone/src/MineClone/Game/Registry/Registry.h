@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "Identifier.h"
-#include "MineClone/Game/Block/Block.h"
 
 namespace mc
 {
@@ -21,11 +20,13 @@ namespace mc
 
         constexpr const T& GetByID(Identifier id);
 
-
     public:
+        constexpr auto begin() { return m_registry.begin(); }
+        constexpr auto end()  { return m_registry.end(); }
+
         constexpr auto begin() const { return m_registry.begin(); }
         constexpr auto end() const { return m_registry.end(); }
-
+        
     private:
         std::map<Identifier, T*> m_registry{};
     };

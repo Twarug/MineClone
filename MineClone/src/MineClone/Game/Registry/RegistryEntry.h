@@ -29,8 +29,7 @@ namespace mc
     private:
         Identifier m_identifier;
 
-        template <typename T1>
-        friend class Registry;
+        friend class Registry<T>;
     };
 }
 
