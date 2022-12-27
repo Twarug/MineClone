@@ -13,10 +13,12 @@ namespace mc
 
     class NoiseGenerator {
     public:
+        NoiseGenerator();
         NoiseGenerator(i32 seed);
 
         f32 GetHeight(i32 x, i32 z, i32 chunkX, i32 chunkZ) const noexcept;
 
+        void SetSeed(i32 seed) noexcept;
         void SetParameters(const NoiseParameters &params) noexcept;
 
     private:
@@ -29,6 +31,6 @@ namespace mc
 
         NoiseParameters m_noiseParameters;
 
-        int m_seed;
+        i32 m_seed;
     };
 }

@@ -5,6 +5,9 @@
 
 namespace mc
 {
+    NoiseGenerator::NoiseGenerator()
+        : NoiseGenerator(2137) {}
+
     NoiseGenerator::NoiseGenerator(i32 seed)
         :  m_noiseParameters{}, m_seed(seed)
     {
@@ -15,9 +18,14 @@ namespace mc
         m_noiseParameters.roughness = 0.53f;
     }
 
-    void NoiseGenerator::SetParameters(const NoiseParameters &params) noexcept
+    void NoiseGenerator::SetParameters(const NoiseParameters& params) noexcept
     {
         m_noiseParameters = params;
+    }
+    
+    void NoiseGenerator::SetSeed(i32 seed) noexcept
+    {
+        m_seed = seed;
     }
 
     f32 NoiseGenerator::GetNoise(i32 n) const noexcept
