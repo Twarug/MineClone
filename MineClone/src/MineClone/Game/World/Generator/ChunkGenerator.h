@@ -1,10 +1,7 @@
 ﻿#pragma once
-#include <random>
 
 #include "MineClone/Game/Utils/NoiseGenerator.h"
 #include "MineClone/Game/World/ChunkColumn.h"
-
-#include "MineClone/Game/Utils/Random.h"
 
 namespace mc
 {
@@ -20,12 +17,17 @@ namespace mc
         static Chunk& CreateChunk(ChunkColumn& column, int3 chunkID);
 
         static void GenerateChunk(Chunk& chunk);
-        static void GenerateHeightMap(ChunkColumn& chunkColumn);
 
     private:
+        static void SetBlock(Chunk& chunk, int3 pos, const BlockState& blockState);
+        
+        static void GenerateBiomeMap(ChunkColumn& chunkColumn);
+        
+        static void GenerateHeightMap(ChunkColumn& chunkColumn);
+        static i32 GenerateHeightMapIn(ChunkColumn& chunkColumn, i32 xMin, i32 zMin, i32 xMax, i32 zMax);
+        
         static bool IsOutsideWorld(int3 chunkID);
 
-        static NoiseGenerator s_noise;
-        static Random<std::minstd_rand> s_random;
+        static NoiseGenerator s_biomeNoise;
     };
 }

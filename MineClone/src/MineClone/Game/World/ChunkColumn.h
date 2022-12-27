@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Chunk.h"
 #include "IChunkProvider.h"
+#include "Biome/Biome.h"
 #include "MineClone/Config.h"
 
 namespace mc
@@ -40,11 +41,13 @@ namespace mc
         World& m_world;
 
         bool m_hasHeightMap = false;
+        i32 m_maxHeight;
         std::array<i32, (u64)Config::CHUNK_SIZE.x * Config::CHUNK_SIZE.z> m_heightMap{};
+        std::array<const Biome*, (u64)(Config::CHUNK_SIZE.x + 1) * (Config::CHUNK_SIZE.z + 1)> m_biomeMap{};
 
         std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks{};
 
-        
+
         friend class ChunkGenerator;
     };
 }

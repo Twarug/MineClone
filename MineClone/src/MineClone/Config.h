@@ -16,8 +16,9 @@ namespace mc
     public:
         static constexpr ulong3 WORLD_SIZE = {100, 16, 100};
         static constexpr int3 CHUNK_SIZE = {16, 16, 16};
+        static constexpr i32 SEA_LEVEL = 64;
 
-        static constexpr u64 RENDER_DISTANCE = 1;
+        static constexpr u64 RENDER_DISTANCE = 4;
 
         static constexpr ulong2 TEXTURE_SIZE = {16, 16};
         
@@ -27,7 +28,6 @@ namespace mc
         
         static const std::array<u32, 6ull * 6ull> INDICES;
         static const std::array<std::array<Vertex3D, 4>, 6> VERTICES;
-        
 
     private:
         static constexpr u64 RENDER_DISTANCE_ARRAY_DIM = RENDER_DISTANCE * 2 + 1;
