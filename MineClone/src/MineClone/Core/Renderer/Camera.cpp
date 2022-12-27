@@ -20,7 +20,7 @@ namespace mc
         return m_proj;
     }
 
-    void Camera::OnResize(u32 width, u32 height) {
+    void Camera::ResizeView(u32 width, u32 height) {
         m_proj = glm::perspective(glm::radians(m_fov), static_cast<float>(width) / static_cast<float>(height), 0.1f, 1000.f);
     }
 }

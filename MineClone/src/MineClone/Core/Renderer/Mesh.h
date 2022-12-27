@@ -9,6 +9,14 @@ namespace mc
         Mesh() = default;
         ~Mesh();
 
+        Mesh(const Mesh&) = delete;
+        Mesh& operator=(const Mesh&) = delete;
+
+        Mesh(Mesh&&) = default;
+        Mesh& operator=(Mesh&&) = default;
+
+    public:
+        
         void Render(const Mat4& transform) const;
 
         void SetIndices(std::span<const u32> indices);

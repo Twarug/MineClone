@@ -12,7 +12,7 @@ namespace mc
     public:
         static void Init(i32 seed);
         
-        static void UpdatePlayer(Scope<World>& world, int3 currentChunkID);
+        static void UpdatePlayer(World& world, int3 currentChunkID);
 
         static void GenerateChunk(Chunk& chunk);
         static Chunk& CreateChunk(ChunkColumn& column, int3 chunkID);

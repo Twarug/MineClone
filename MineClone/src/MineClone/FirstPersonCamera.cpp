@@ -60,4 +60,8 @@ namespace mc
         
         m_pos += vel * SPEED * deltaTime;
     }
+
+    void FirstPersonCamera::OnEvent(WindowResizeEvent& ev) {
+        ResizeView(ev.GetWidth(), ev.GetHeight());
+    }
 }

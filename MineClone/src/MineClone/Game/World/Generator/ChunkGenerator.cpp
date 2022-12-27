@@ -16,7 +16,7 @@ namespace mc
         // s_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
     }
 
-    void ChunkGenerator::UpdatePlayer(Scope<World>& world, int3 currentChunkID) {
+    void ChunkGenerator::UpdatePlayer(World& world, int3 currentChunkID) {
 
         using namespace std::chrono;
         auto start = high_resolution_clock::now();  
@@ -30,10 +30,10 @@ namespace mc
             int2 columnID = chunkID.xz;
 
             ChunkColumn* column = nullptr;
-            if(world->m_chunkColumns.contains(columnID))
-                column = &world->m_chunkColumns.at(columnID);
+            if(world.m_chunkColumns.contains(columnID))
+                column = &world.m_chunkColumns.at(columnID);
             else
-                column = &world->m_chunkColumns.emplace(columnID, ChunkColumn(columnID, *world)).first->second;
+                column = &world.m_chunkColumns.emplace(columnID, ChunkColumn(columnID, world)).first->second;
 
             if(column->GetChunk(chunkID))
                 return;
@@ -44,7 +44,7 @@ namespace mc
             chunk.UpdateMesh();
             for(const Facing& face : Facing::FACINGS) {
                 int3 neighbourChunkID = chunkID + face.directionVec;
-                if(Chunk* neighbour = world->GetChunk(neighbourChunkID))
+                if(Chunk* neighbour = world.GetChunk(neighbourChunkID))
                     neighbour->UpdateMesh();
             }
         });

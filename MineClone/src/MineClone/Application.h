@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "FirstPersonCamera.h"
+#include "Game/Player/Player.h"
 #include "MineClone/Core/Window.h"
 
 #include "MineClone/Core/Event/WindowEvents.h"
@@ -30,7 +31,7 @@ namespace mc
         
         void Tick();
         void Update();
-        void Render();
+        void Render() const;
         
         
     protected:
@@ -45,13 +46,12 @@ namespace mc
 
         float m_deltaTime{};
         std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint = std::chrono::high_resolution_clock::now();
-
-        int3 m_lastPlayerChunkID {};
         
         Scope<Window> m_window;
-        Scope<FirstPersonCamera> m_camera;
 
+        
         Scope<World> m_world;
+        Scope<Player> m_player;
 
     private:
         inline static Application* s_instance = nullptr;

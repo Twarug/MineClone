@@ -7,16 +7,16 @@ namespace mc
     public:
         Camera(float fov, u32 width, u32 height);
 
-        void SetPos(float3 pos) { m_pos = pos; }
-        void SetRot(float2 rot) { m_rot = rot; }
+        void SetPosition(float3 pos) { m_pos = pos; }
+        void SetRotation(float2 rot) { m_rot = rot; }
         
-        float3 GetPos() const { return m_pos; }
-        float2 GetRot() const { return m_rot; }
+        float3 GetPosition() const { return m_pos; }
+        float2 GetRotation() const { return m_rot; }
 
         Mat4 GetView() const;
         Mat4 GetProjection() const;
 
-        void OnResize(u32 width, u32 height);
+        void ResizeView(u32 width, u32 height);
 
     protected:
         float3 m_pos{};
