@@ -43,10 +43,16 @@ namespace mc
         std::cout << "Renderer Deinit.\n";
         vkDeviceWaitIdle(g_state.device);
 
+
+        
         CleanupSwapchain();
 
-        for(FrameData& frame : g_state.frames)
+        for(FrameData& frame : g_state.frames) {
             frame.uboBuffer->Delete();
+            for(auto& fn : frame.afterSubmit)
+                fn();
+            frame.afterSubmit.clear();
+        }
 
         vkDestroyDescriptorPool(g_state.device, g_state.descriptorPool, g_state.allocator);
 
@@ -209,8 +215,13 @@ namespace mc
         else if(result != VK_SUCCESS)
             throw std::runtime_error("failed to present swap chain image!");
 
+        for(auto& fn : frame.afterSubmit)
+            fn();
+        frame.afterSubmit.clear();
+        
         g_state.currentMaterial = nullptr;
         g_state.currentFrame = (g_state.currentFrame + 1) % FrameData::MAX_FRAMES_IN_FLIGHT;
+        
     }
 
 
@@ -466,8 +477,11 @@ namespace mc
         vkResetCommandPool(g_state.device, g_state.uploadContext.commandPool, 0);
     }
 
-    void RendererAPI::SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function)
-    {
+    void RendererAPI::SubmitAfterFrame(std::function<void()>&& function) {
+        g_state.GetCurrentFrame().afterSubmit.push_back(std::move(function));
+    }
+
+    void RendererAPI::SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function) {
         g_state.nextFrameSubmits.push_back(std::move(function));
     }
 

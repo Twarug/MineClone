@@ -19,12 +19,23 @@ namespace mc
 
     void Buffer::Delete()
     {
-        auto& state = RendererAPI::GetState();
-        if(buffer)
-            vkDestroyBuffer(state.device, buffer, state.allocator);
+        struct Deleter
+        {
+            VkBuffer buffer;
+            VkDeviceMemory memory;
+            
+            void operator()() const {
+                auto& state = RendererAPI::GetState();
+                if(buffer)
+                    vkDestroyBuffer(state.device, buffer, state.allocator);
 
-        if(memory)
-            vkFreeMemory(state.device, memory, state.allocator);
+                if(memory)
+                    vkFreeMemory(state.device, memory, state.allocator); 
+            }
+        };
+        
+        if(buffer || memory)
+            RendererAPI::SubmitAfterFrame(Deleter{buffer, memory});
 
         buffer = nullptr;
         memory = nullptr;

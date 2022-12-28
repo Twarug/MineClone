@@ -62,6 +62,8 @@ namespace mc
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
         Ref<Buffer> uboBuffer;
+        
+        std::vector<std::function<void()>> afterSubmit;
     };
 
     struct GlobalState

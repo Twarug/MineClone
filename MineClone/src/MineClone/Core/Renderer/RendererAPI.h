@@ -43,6 +43,7 @@ namespace mc
         static void CopyBuffer(Ref<Buffer> srcBuffer, Ref<AllocatedImage> dstImage, u64 size);
 
         static void SubmitImmediate(std::function<void(VkCommandBuffer cmd)>&& function);
+        static void SubmitAfterFrame(std::function<void()>&& function);
         static void SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function);
 
     private:
