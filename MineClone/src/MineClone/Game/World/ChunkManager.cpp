@@ -8,12 +8,36 @@
 
 namespace mc
 {
+    static std::queue<Chunk*> g_generateQueue;
+    
+    void ChunkManager::Update(World& world) {
+
+        for(int i = 0; i < 1; i++) {
+            if(g_generateQueue.empty())
+                return;
+
+            Chunk* chunk = g_generateQueue.front();
+            g_generateQueue.pop();
+
+            if(!world.GetChunk(chunk->GetID()))
+                continue;
+        
+            ChunkGenerator::GenerateChunk(*chunk);
+            chunk->UpdateMesh();
+            for(const Facing& face : Facing::FACINGS) {
+                int3 neighbourChunkID = chunk->m_id + face.directionVec;
+                if(Chunk* neighbour = world.GetChunk(neighbourChunkID))
+                    neighbour->UpdateMesh();
+            }
+        }
+    }
+
     void ChunkManager::UpdatePlayer(World& world, int3 currentChunkID) {
 
         using namespace std::chrono;
         auto start = high_resolution_clock::now();
 
-        constexpr i32 deleteDistance = (i32)(Config::RENDER_DISTANCE * 2.f);
+        constexpr i32 deleteDistance = (i32)(Config::RENDER_DISTANCE * 1.25f);
 
         auto idsView = world.m_chunkColumns | std::views::keys;
         std::vector<int2> columnsIDs{std::begin(idsView), std::end(idsView)};
@@ -37,46 +61,9 @@ namespace mc
                 chunk.reset();
             }
         }
-        
-            for(i32 z = -deleteDistance; z < deleteDistance; z++) {
-                for(i32 x = -deleteDistance; x < deleteDistance; x++) {
-
-                    int2 columnID = currentChunkID.xz + int2{x, z};
-                
-                    if(!world.m_chunkColumns.contains(columnID))
-                        continue;
-                    
-                    ChunkColumn& column = world.m_chunkColumns.at(columnID);
-
-                    for(i32 dy = -deleteDistance; dy < deleteDistance; dy++) {
-                        if(dy >= -(i32)Config::RENDER_DISTANCE && dy < (i32)Config::RENDER_DISTANCE &&
-                           x  >= -(i32)Config::RENDER_DISTANCE && x  < (i32)Config::RENDER_DISTANCE &&
-                           z  >= -(i32)Config::RENDER_DISTANCE && z  < (i32)Config::RENDER_DISTANCE) {
-                        
-                            dy = Config::RENDER_DISTANCE;
-                            continue;
-                           }
-                
-                        int y = dy + currentChunkID.y;
-                
-                        if(y < 0 || y >= (i32)Config::WORLD_SIZE.y)
-                            continue;
-                    
-                        Scope<Chunk>& chunk = column.m_chunks.at(y);
-                
-                        if(!chunk)
-                            continue;
-
-                        std::cout << to_string(int3{x, y, z}) << '\n';
-                        chunk.reset();
-                    }
-
-                    // world.m_chunkColumns.erase(columnID);
-                }
-            }
 
         int chunkCount = 0;
-        std::for_each(std::execution::unseq, Config::CHUNK_RENDER_PATTERN.begin(), Config::CHUNK_RENDER_PATTERN.end(), [&chunkCount, &world, currentChunkID](int3 relative) {
+        std::for_each(std::execution::seq, Config::CHUNK_RENDER_PATTERN.begin(), Config::CHUNK_RENDER_PATTERN.end(), [&chunkCount, &world, currentChunkID](int3 relative) {
             int3 chunkID = currentChunkID + relative;
             if(IsOutsideWorld(chunkID))
                 return;
@@ -93,14 +80,8 @@ namespace mc
                 return;
                 
             Chunk& chunk = CreateChunk(*column, chunkID);
-            ChunkGenerator::GenerateChunk(chunk);
+            g_generateQueue.push(&chunk);
             chunkCount++;
-            chunk.UpdateMesh();
-            for(const Facing& face : Facing::FACINGS) {
-                int3 neighbourChunkID = chunkID + face.directionVec;
-                if(Chunk* neighbour = world.GetChunk(neighbourChunkID))
-                    neighbour->UpdateMesh();
-            }
         });        
         
         std::cout << "Generation of " << chunkCount << " chunks for player at chunkID: " << to_string(currentChunkID) << ", took " << duration_cast<milliseconds>(high_resolution_clock::now() - start) << '\n';

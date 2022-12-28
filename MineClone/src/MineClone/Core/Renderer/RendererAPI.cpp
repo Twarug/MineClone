@@ -478,7 +478,7 @@ namespace mc
     }
 
     void RendererAPI::SubmitAfterFrame(std::function<void()>&& function) {
-        g_state.GetCurrentFrame().afterSubmit.push_back(std::move(function));
+        g_state.frames[(g_state.currentFrame - 1 + FrameData::MAX_FRAMES_IN_FLIGHT) % FrameData::MAX_FRAMES_IN_FLIGHT].afterSubmit.push_back(std::move(function));
     }
 
     void RendererAPI::SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function) {

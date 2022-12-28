@@ -6,6 +6,8 @@ namespace mc
     class ChunkManager
     {
     public:
+        static void Update(World& world);
+        
         static void UpdatePlayer(World& world, int3 currentChunkID);
 
         static Chunk& CreateChunk(ChunkColumn& column, int3 chunkID);

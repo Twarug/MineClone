@@ -18,7 +18,7 @@ namespace mc
         static constexpr int3 CHUNK_SIZE = {16, 16, 16};
         static constexpr i32 SEA_LEVEL = 64;
 
-        static constexpr u64 RENDER_DISTANCE = 4;
+        static constexpr u64 RENDER_DISTANCE = 5;
 
         static constexpr ulong2 TEXTURE_SIZE = {16, 16};
         

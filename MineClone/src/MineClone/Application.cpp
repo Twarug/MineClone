@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "Core/Input/Input.h"
+#include "Game/World/ChunkManager.h"
 #include "Game/World/Generator/ChunkGenerator.h"
 #include "MineClone/Core/Event/ApplicationEvents.h"
 #include "MineClone/Core/Renderer/RendererAPI.h"
@@ -108,6 +109,7 @@ namespace mc
 
         m_window->Update();
         m_player->Update(m_deltaTime);
+        ChunkManager::Update(*m_world);
 
         {
             AppUpdateEvent ev{m_deltaTime};
