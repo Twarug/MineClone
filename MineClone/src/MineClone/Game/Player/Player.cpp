@@ -4,8 +4,7 @@
 #include "MineClone/Core/Input/Input.h"
 #include "MineClone/Game/World/World.h"
 #include "MineClone/Game/World/Chunk.h"
-
-#include "MineClone/Game/World/Generator/ChunkGenerator.h"
+#include "MineClone/Game/World/ChunkManager.h"
 
 namespace mc
 {    
@@ -46,7 +45,7 @@ namespace mc
         // Chunk generation
         int3 currentChunkID = Chunk::ToChunkID(glm::floor(GetPosition()));
         if(currentChunkID != m_currentChunkID) {
-            ChunkGenerator::UpdatePlayer(m_world, currentChunkID);
+            ChunkManager::UpdatePlayer(m_world, currentChunkID);
             m_currentChunkID = currentChunkID;
         }
     }

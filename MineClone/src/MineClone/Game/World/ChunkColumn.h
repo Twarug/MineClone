@@ -48,6 +48,7 @@ namespace mc
         std::array<Scope<Chunk>, Config::WORLD_SIZE.y> m_chunks{};
 
 
+        friend class ChunkManager;
         friend class ChunkGenerator;
     };
 }

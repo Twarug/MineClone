@@ -48,6 +48,7 @@ namespace mc
         Mesh m_mesh;
         Mat4 m_transform{};
 
+        friend class ChunkManager;
         friend class ChunkGenerator;
     };
 }

@@ -11,10 +11,6 @@ namespace mc
     {
     public:
         static void Init(i32 seed);
-        
-        static void UpdatePlayer(World& world, int3 currentChunkID);
-
-        static Chunk& CreateChunk(ChunkColumn& column, int3 chunkID);
 
         static void GenerateChunk(Chunk& chunk);
 
