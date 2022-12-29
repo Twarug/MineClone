@@ -11,7 +11,7 @@ namespace mc
     const Block& Block::GRASS_BLOCK = REGISTRY.Register(new Block("grass_block", {{0, 2, 3, 3, 3, 3}}));
     const Block& Block::DIRT = REGISTRY.Register(new Block("dirt", 2));
     const Block& Block::SAND = REGISTRY.Register(new Block("sand", 18));
-    const Block& Block::OAK_LOG = REGISTRY.Register(new Block("oak_log", {{20, 20, 21, 21, 21, 21}}));
+    const Block& Block::OAK_LOG = REGISTRY.Register(new Block("oak_log", {{21, 21, 20, 20, 20, 20}}));
 
     Block::Block(const std::string& name, u64 textureIndex, bool transparent)
         : Block(name, std::array<u64, 6>{{textureIndex, textureIndex, textureIndex, textureIndex, textureIndex, textureIndex}}, transparent) {}
