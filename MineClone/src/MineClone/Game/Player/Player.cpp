@@ -18,7 +18,6 @@ namespace mc
         m_camera.SetRotation({-30, 0});
 
         m_selectedBlockMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
-        m_selectedBlockMesh.SetVertices(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
 
         {
             m_blockIndicatorMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
@@ -34,6 +33,7 @@ namespace mc
             g_blocksList.append_range(Block::REGISTRY | std::views::values);
             g_blocksList.erase(std::ranges::remove(g_blocksList, &Block::AIR).begin());
         }
+        SelectSlot(0);
     }
 
     Player::~Player() {
@@ -68,33 +68,9 @@ namespace mc
         float scrollDelta = Input::GetScrollDelta().y;
         if(scrollDelta != 0.f) {
             if(scrollDelta < 0.f)
-                m_selectedBlockIndex = (m_selectedBlockIndex - 1 + g_blocksList.size()) % (i32)g_blocksList.size();
+                SelectSlot((m_selectedBlockIndex - 1 + g_blocksList.size()) % (i32)g_blocksList.size());
             else
-                m_selectedBlockIndex = (m_selectedBlockIndex + 1) % g_blocksList.size();
-
-            const Block* block = g_blocksList[m_selectedBlockIndex];
-            
-            std::vector<Vertex3D> vertices;
-            vertices.reserve(24);
-            
-            for(const Facing& facing : Facing::FACINGS) {
-                auto face = Config::VERTICES[facing];
-                float4 uvRect = block->GetTextureUVs(facing);
-                std::array<float2, 4> uvs = {{
-                    uvRect.xy,
-                    uvRect.zy,
-                    uvRect.xw,
-                    uvRect.zw
-                }};
-
-                int vIndex = 0;
-                for(Vertex3D v : face) {
-                    v.uv = uvs[vIndex++];
-                    vertices.push_back(v);
-                }
-            }
-            
-            m_selectedBlockMesh.SetVertices(std::span(vertices));
+                SelectSlot((m_selectedBlockIndex + 1) % g_blocksList.size());
         }
         
         // Block Indicator
@@ -115,5 +91,32 @@ namespace mc
             ChunkManager::UpdatePlayer(m_world, currentChunkID);
             m_currentChunkID = currentChunkID;
         }
+    }
+
+    void Player::SelectSlot(int index) {
+        m_selectedBlockIndex = index;
+        const Block* block = g_blocksList[m_selectedBlockIndex];
+            
+        std::vector<Vertex3D> vertices;
+        vertices.reserve(24);
+            
+        for(const Facing& facing : Facing::FACINGS) {
+            auto face = Config::VERTICES[facing];
+            float4 uvRect = block->GetTextureUVs(facing);
+            std::array<float2, 4> uvs = {{
+                uvRect.xy,
+                uvRect.zy,
+                uvRect.xw,
+                uvRect.zw
+            }};
+
+            int vIndex = 0;
+            for(Vertex3D v : face) {
+                v.uv = uvs[vIndex++];
+                vertices.push_back(v);
+            }
+        }
+            
+        m_selectedBlockMesh.SetVertices(std::span(vertices));
     }
 }

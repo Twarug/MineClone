@@ -29,6 +29,10 @@ namespace mc
         
         int3 GetCurrentChunkID() const { return m_currentChunkID; }
 
+    public:
+
+        void SelectSlot(int index);
+        
     private:
         World& m_world;
         FirstPersonCamera m_camera;
