@@ -21,6 +21,9 @@ namespace mc
 
         constexpr Facing(const Facing&) noexcept = default;
         constexpr Facing(Facing&&) noexcept = default;
+
+    public:
+        constexpr operator int() const { return index; }
         
     public:
         u32 index;

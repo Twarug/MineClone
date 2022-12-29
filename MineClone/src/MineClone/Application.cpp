@@ -120,10 +120,9 @@ namespace mc
     void Application::Render() const {
         g_chunkMaterial->Bind();
         m_world->Render();
+        m_player->Render();
 
         g_mat->Bind();
-        m_player->Render();
-        
         if(Input::GetKey(KeyCode::B).pressed) {
             if(Chunk* chunk = m_world->GetChunk(m_player->GetCurrentChunkID())) {
                 int3 chunkID = chunk->GetID();

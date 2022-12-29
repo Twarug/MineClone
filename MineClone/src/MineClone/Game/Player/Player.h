@@ -35,8 +35,12 @@ namespace mc
 
         int3 m_currentChunkID {};
 
-        
-        Mesh m_blockIndicator {};
+        i32 m_selectedBlockIndex = 0;
+        Mesh m_selectedBlockMesh {};
+
+        Mesh m_blockIndicatorMesh {};
         HitInfo m_blockIndicatorInfo {};
+        Ref<Texture> m_blockIndicatorTexture {};
+        Ref<Material> m_blockIndicatorMat {};
     };
 }
