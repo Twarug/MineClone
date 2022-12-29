@@ -86,7 +86,7 @@ namespace mc
             
             //Check if ray has hit a wall
             BlockState* blockState = GetBlockState(blockPos);
-            if (blockState && blockState->GetBlock().GetName() != "air")
+            if (blockState && blockState->GetBlock() != Block::AIR)
                 return {true, blockState, blockPos, normal};
         }
         

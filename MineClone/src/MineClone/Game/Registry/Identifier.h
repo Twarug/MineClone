@@ -5,9 +5,7 @@ namespace mc
     struct Identifier
     {
         std::string name;
-
-        constexpr bool operator<(const Identifier& r) const {
-            return name < r.name;
-        }
+        
+        std::strong_ordering operator<=>(const Identifier& identifier) const = default;
     };
 }

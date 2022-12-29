@@ -24,7 +24,15 @@ namespace mc
     public:
         constexpr Identifier GetId() const;
         constexpr const std::string& GetName() const;
-        auto operator<=>(const RegistryEntry& registryEntry) const = default;
+        
+        friend std::strong_ordering operator<=>(const RegistryEntry& entry, const RegistryEntry& otherEntry) {
+            return &entry <=> &otherEntry;
+        }
+
+        bool operator==(const RegistryEntry& oth) const {
+            return *this <=> oth == 0;
+        }
+    
 
     private:
         Identifier m_identifier;
