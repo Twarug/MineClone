@@ -6,7 +6,7 @@
 
 namespace mc
 {
-    class FirstPersonCamera : public Camera, EventHandler<WindowResizeEvent>
+    class FirstPersonCamera : public Camera, EventHandler<WindowResizeEvent, WindowFocusEvent>
     {
     public:
         FirstPersonCamera(float fov, u32 width, u32 height);
@@ -15,6 +15,7 @@ namespace mc
 
     protected:
         void OnEvent(WindowResizeEvent& ev) override;
+        void OnEvent(WindowFocusEvent& ev) override;
         
     private:
         int2 m_prevMousePos{};

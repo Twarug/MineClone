@@ -16,14 +16,10 @@ namespace mc
     void FirstPersonCamera::Update(float deltaTime) {
         auto mouse = Input::GetButton(MouseCode::Button0);
         int2 mousePos = Input::GetMousePos();
-        if(mouse.down)
-            m_prevMousePos = mousePos;
 
-        if(mouse.pressed) {
+        if(mouse.pressed || true) {
             float2 mouseDelta = float2(mousePos - m_prevMousePos).yx * SENSITIVITY;
             m_prevMousePos = mousePos;
-
-            // mouseDelta.y *= -1.f;
             m_rot -= mouseDelta;
         }
 
@@ -63,5 +59,11 @@ namespace mc
 
     void FirstPersonCamera::OnEvent(WindowResizeEvent& ev) {
         ResizeView(ev.GetWidth(), ev.GetHeight());
+    }
+
+    void FirstPersonCamera::OnEvent(WindowFocusEvent& ev) {
+        if(ev.GetFocused()) {
+            m_prevMousePos = Input::GetMousePos();
+        }
     }
 }
