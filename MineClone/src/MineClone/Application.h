@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-#include "FirstPersonCamera.h"
 #include "Game/Player/Player.h"
 #include "MineClone/Core/Window.h"
 
@@ -10,7 +9,7 @@
 
 namespace mc
 {
-    class Application final : EventHandler<WindowCloseEvent, WindowResizeEvent>
+    class Application final : EventHandler<WindowCloseEvent, WindowResizeEvent, WindowFocusEvent>
     {
     public:
         std::string name;
@@ -37,12 +36,14 @@ namespace mc
     protected:
         void OnEvent(WindowCloseEvent& ev) override;
         void OnEvent(WindowResizeEvent& ev) override;
+        void OnEvent(WindowFocusEvent& ev) override;
 
     public:
         static Application& Get() { return *s_instance; }
 
     private:
         bool m_isRunning;
+        bool m_isFocused;
 
         float m_deltaTime{};
         std::chrono::high_resolution_clock::time_point m_lastFrameTimePoint = std::chrono::high_resolution_clock::now();

@@ -18,6 +18,28 @@ namespace mc
         const char* GetName() const override { return "WindowCloseEvent"; }
     };
 
+    class WindowFocusEvent : public Event
+    {
+    public:
+        WindowFocusEvent(const Window& window, bool focused)
+            : window(window), m_focused(focused) {}
+
+        const Window& window;
+
+        bool GetFocused() const { return m_focused; }
+        
+        const char* GetName() const override { return "WindowFocusEvent"; }
+        
+        std::string ToString() const override {
+            std::stringstream ss;
+            ss << "WindowFocusEvent: " << m_focused;
+            return ss.str();
+        }
+
+    private:
+        bool m_focused;
+    };
+    
     class WindowResizeEvent : public Event
     {
     public:

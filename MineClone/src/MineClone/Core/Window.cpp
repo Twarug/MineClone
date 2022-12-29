@@ -36,6 +36,13 @@ namespace mc
             EventHandler<WindowResizeEvent>::Invoke(ev);
         });
 
+        
+        glfwSetWindowFocusCallback(window, [](GLFWwindow* window, int focused) {
+            Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
+            WindowFocusEvent ev{*win, (bool)focused};
+            EventHandler<WindowFocusEvent>::Invoke(ev);
+        });
+
         glfwSetWindowCloseCallback(window, [](GLFWwindow* window) {
             Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
             WindowCloseEvent ev{*win};
@@ -118,6 +125,18 @@ namespace mc
         glfwSetWindowSize(static_cast<GLFWwindow*>(m_nativeWindow), width, height);
         m_size.x = width;
         m_size.y = height;
+    }
+
+    void Window::Focus() const {
+        glfwFocusWindow((GLFWwindow*)m_nativeWindow);
+    }
+    
+    void Window::LockCursor() const {
+        glfwSetInputMode((GLFWwindow*)m_nativeWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    void Window::UnlockCursor() const {
+        glfwSetInputMode((GLFWwindow*)m_nativeWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
 
     bool Window::operator==(const Window& oth) const {

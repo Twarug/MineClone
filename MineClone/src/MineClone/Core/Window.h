@@ -18,6 +18,11 @@ namespace mc
 
         void Resize(u32 width, u32 height);
 
+        void Focus() const;
+
+        void LockCursor() const;
+        void UnlockCursor() const;
+        
         uint2 GetSize() const { return m_size; }
         u32 GetWidth() const { return m_size.x; }
         u32 GetHeight() const { return m_size.y; }

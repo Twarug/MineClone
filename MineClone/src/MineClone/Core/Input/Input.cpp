@@ -17,6 +17,13 @@ namespace mc
         return g_keys[static_cast<u16>(keyCode)];
     }
 
+    bool Input::GetAnyButtonDown() {
+        for(Button& button : g_mouseButtons)
+            if(button.down)
+                return true;
+        return false;
+    }
+
     Button Input::GetButton(MouseCode mouseCode) {
         return g_mouseButtons[static_cast<u16>(mouseCode)];
     }

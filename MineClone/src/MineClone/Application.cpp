@@ -48,6 +48,8 @@ namespace mc
 
         m_world = CreateScope<World>();
         m_player = CreateScope<Player>(*m_world);
+
+        m_window->LockCursor();
         
         g_texture = RendererAPI::LoadTexture("assets/texture.png");
         auto des = Vertex3D::GetDescription();
@@ -94,6 +96,9 @@ namespace mc
     }
 
     void Application::Tick() {
+        if(!m_isFocused)
+            return;
+
         m_world->Tick();
     }
 
@@ -108,7 +113,24 @@ namespace mc
         }
 
         m_window->Update();
-        m_player->Update(m_deltaTime);
+
+        if(m_isFocused) {
+            if(Input::GetKey(KeyCode::Escape).down) {
+                m_window->UnlockCursor();
+                m_isFocused = false;
+            }
+        }
+        else {
+            if(Input::GetAnyButtonDown()) {
+                m_window->LockCursor();
+                m_isFocused = true;
+            }
+                
+        }
+
+        if(m_isFocused)
+            m_player->Update(m_deltaTime);
+
         ChunkManager::Update(*m_world);
 
         {
@@ -138,5 +160,13 @@ namespace mc
 
     void Application::OnEvent(WindowResizeEvent& ev) {
         RendererAPI::Resize(ev.GetWidth(), ev.GetHeight());
+    }
+
+    void Application::OnEvent(WindowFocusEvent& ev) {
+        m_isFocused = ev.GetFocused();
+        if(ev.GetFocused())
+            m_window->LockCursor();
+        else
+            m_window->UnlockCursor();
     }
 }

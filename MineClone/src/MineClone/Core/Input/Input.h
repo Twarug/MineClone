@@ -16,6 +16,8 @@ namespace mc
     {
     public:
         static Key GetKey(KeyCode keyCode);
+
+        static bool GetAnyButtonDown();
         static Button GetButton(MouseCode mouseCode);
 
         static int2 GetMousePos();
