@@ -56,7 +56,10 @@ namespace mc
         if(m_blockIndicatorInfo.hit)
         {
             m_blockIndicatorMat->Bind();
-            m_blockIndicatorMesh.Render(glm::scale(glm::translate(Mat4{1}, float3(m_blockIndicatorInfo.blockPos)), float3(1.001f)));
+            transform = glm::translate(Mat4{1}, float3(m_blockIndicatorInfo.blockPos));
+            transform = glm::scale(transform, float3(1.002f));
+            transform = glm::translate(transform, -float3{.001f});
+            m_blockIndicatorMesh.Render(transform);
         }
     }
 
