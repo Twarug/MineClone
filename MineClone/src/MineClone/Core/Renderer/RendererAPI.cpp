@@ -106,8 +106,8 @@ namespace mc
 
         static float time = 0;
         time += deltaTime;
-        UniformBufferObject ubo{{deltaTime, time, 0, 0}, camera.GetProjection(), camera.GetView()};
-        memcpy(frame.uboBuffer->mappedMemory, &ubo, sizeof(ubo));
+        frame.ubo = {{deltaTime, time, 0, 0}, camera.GetProjection(), camera.GetView()};
+        memcpy(frame.uboBuffer->mappedMemory, &frame.ubo, sizeof(frame.ubo));
 
         vkResetCommandBuffer(frame.commandBuffer, /*VkCommandBufferResetFlagBits*/ 0);
 

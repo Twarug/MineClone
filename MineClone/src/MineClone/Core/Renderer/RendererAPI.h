@@ -46,8 +46,8 @@ namespace mc
         static void SubmitAfterFrame(std::function<void()>&& function);
         static void SubmitNextFrame(std::function<void(VkCommandBuffer cmd)>&& function);
 
-    private:
         static GlobalState& GetState();
+    private:
 
         static void CreateInstance();
         static void SetupDebugMessenger();

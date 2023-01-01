@@ -45,9 +45,8 @@ namespace mc
     }
 
     void Player::Render() const {
-        Mat4 transform = glm::translate(Mat4{1}, GetPosition());
-        transform = glm::rotate(transform, glm::radians(GetRotation().y), {0, 1, 0});
-        transform = glm::rotate(transform, glm::radians(GetRotation().x), {1, 0, 0});
+
+        Mat4 transform = inverse(RendererAPI::GetState().GetCurrentFrame().ubo.view);
         transform = glm::translate(transform, -float3{.5f, .5f, .5f});
         transform = glm::scale(transform, float3{.3f});
         transform = glm::translate(transform, float3{3, 0, -1.f});

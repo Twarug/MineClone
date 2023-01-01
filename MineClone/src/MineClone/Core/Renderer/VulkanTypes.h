@@ -61,6 +61,7 @@ namespace mc
         VkCommandPool commandPool = VK_NULL_HANDLE;
         VkCommandBuffer commandBuffer = VK_NULL_HANDLE;
 
+        UniformBufferObject ubo;
         Ref<Buffer> uboBuffer;
         
         std::vector<std::function<void()>> afterSubmit;
