@@ -40,7 +40,7 @@ files({
     "%{prj.name}/src/**.h",
     "%{prj.name}/src/**.cpp",
     "%{prj.name}/src/**.tpp",
-    "%{prj.name}/out/**",
+    "run/**",
     "Premake5.lua"
 })
 
