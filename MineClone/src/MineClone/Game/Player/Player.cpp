@@ -97,6 +97,10 @@ namespace mc
             else
                 SelectSlot((m_selectedBlockIndex + 1) % g_blocksList.size());
         }
+
+        for(int i = 0; i < 10; i++)
+            if(Input::GetKey((KeyCode)((i32)KeyCode::D1 + i)).down)
+                SelectSlot(i % g_blocksList.size());
         
         // Block Indicator
         float2 rot = glm::radians(GetRotation());
