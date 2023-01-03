@@ -20,10 +20,19 @@ namespace mc
         m_selectedBlockMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
 
         {
-            m_blockIndicatorMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
-            m_blockIndicatorMesh.SetVertices(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
+            std::vector<Vertex3D> vertices;
+            vertices.append_range(std::span(Config::VERTICES.front().data(), 6ull * 4ull));
 
-            m_blockIndicatorTexture = RendererAPI::LoadTexture("assets/block indicator.png");
+            // for(const Facing& facing : Facing::FACINGS)
+                for(int i = 0; i < 4; i++) {
+                    // vertices[facing.index * 4 + i].color = (float3)facing.directionVec / 4.f + float3{.75f};   
+                    vertices[i].color = float3{0, .7f, 0};
+                }
+            
+            m_blockIndicatorMesh.SetIndices(std::span(Config::INDICES.data(), Config::INDICES.size()));
+            m_blockIndicatorMesh.SetVertices(std::span(vertices));
+
+            m_blockIndicatorTexture = RendererAPI::LoadTexture("assets/block indicator.png", VK_FILTER_NEAREST);
 
             m_blockIndicatorMat = Material::Create("Block Indicator", Vertex3D::GetDescription());
             m_blockIndicatorMat->SetTexture(m_blockIndicatorTexture);
@@ -53,10 +62,24 @@ namespace mc
         
         m_selectedBlockMesh.Render(transform);
         
-        if(m_blockIndicatorInfo.hit)
-        {
+        if(m_blockIndicatorInfo.hit) {
             m_blockIndicatorMat->Bind();
             transform = glm::translate(Mat4{1}, float3(m_blockIndicatorInfo.blockPos));
+            transform = glm::translate(transform, float3(.5f));
+            if(m_blockIndicatorInfo.hitNormal == float3{0, 1, 0}) // Top
+                ;
+            else if(m_blockIndicatorInfo.hitNormal == float3{0, -1, 0}) // Bottom
+                transform = glm::rotate(transform, glm::radians(180.f), {1, 0, 0});
+            else if(m_blockIndicatorInfo.hitNormal == float3{0, 0, 1}) // North
+                transform = glm::rotate(transform, glm::radians(90.f), {1, 0, 0});
+            else if(m_blockIndicatorInfo.hitNormal == float3{0, 0, -1}) // South
+                transform = glm::rotate(transform, glm::radians(-90.f), {1, 0, 0});
+            else if(m_blockIndicatorInfo.hitNormal == float3{1, 0, 0}) // East
+                transform = glm::rotate(transform, glm::radians(-90.f), {0, 0, 1});
+            else if(m_blockIndicatorInfo.hitNormal == float3{-1, 0, 0}) // West
+                transform = glm::rotate(transform, glm::radians(90.f), {0, 0, 1});
+            
+            transform = glm::translate(transform, float3(-.5f));
             transform = glm::scale(transform, float3(1.002f));
             transform = glm::translate(transform, -float3{.001f});
             m_blockIndicatorMesh.Render(transform);
