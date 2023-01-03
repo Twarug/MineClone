@@ -128,7 +128,7 @@ namespace mc
             }
         }
         else {
-            if(Input::GetAnyButtonDown()) {
+            if(Input::GetAnyButtonDown() && !ImGui::GetIO().WantCaptureMouse) {
                 m_window->LockCursor();
                 m_isFocused = true;
             }
@@ -161,8 +161,6 @@ namespace mc
 
     void Application::RenderGUI() {
         ImGui::ShowDemoWindow();
-
-        // ImGui::BeginTable();
     }
 
     void Application::OnEvent(WindowCloseEvent& ev) {
@@ -175,10 +173,9 @@ namespace mc
     }
 
     void Application::OnEvent(WindowFocusEvent& ev) {
-        m_isFocused = ev.GetFocused();
-        if(ev.GetFocused())
-            m_window->LockCursor();
-        else
+        if(!ev.GetFocused()){
             m_window->UnlockCursor();
+            m_isFocused = false;
+        }
     }
 }

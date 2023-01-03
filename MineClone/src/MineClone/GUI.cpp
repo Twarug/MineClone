@@ -38,11 +38,11 @@ namespace mc
 		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		pool_info.maxSets = 1000;
-		pool_info.poolSizeCount = std::size(pool_sizes);
+		pool_info.poolSizeCount = (u32)std::size(pool_sizes);
 		pool_info.pPoolSizes = pool_sizes;
 
 		VkDescriptorPool imguiPool;
-		if(vkCreateDescriptorPool(state.device, &pool_info, nullptr, &imguiPool) != VK_SUCCESS)
+		if(vkCreateDescriptorPool(state.device, &pool_info, state.allocator, &imguiPool) != VK_SUCCESS)
 			throw std::exception("Unable to create Descriptor pool for ImGui");
 
 
@@ -50,22 +50,24 @@ namespace mc
 
 		//this initializes the core structures of imgui
 		ImGui::CreateContext();
-    	ImGui::StyleColorsDark();
-
 		//this initializes imgui for GLFW
 		ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Application::Get().GetMainWindow().GetNativeWindow(), true);
 
-		//this initializes imgui for Vulkan
-		ImGui_ImplVulkan_InitInfo init_info = {};
-		init_info.Instance = state.instance;
-		init_info.PhysicalDevice = state.physicalDevice;
-		init_info.Device = state.device;
-		init_info.Queue = state.graphicsQueue;
-		init_info.DescriptorPool = imguiPool;
-		init_info.MinImageCount = 3;
-		init_info.ImageCount = 3;
-		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    	ImGui::StyleColorsDark();
 
+		//this initializes imgui for Vulkan
+		ImGui_ImplVulkan_InitInfo init_info = {
+			.Instance = state.instance,
+			.PhysicalDevice = state.physicalDevice,
+			.Device = state.device,
+			.Queue = state.graphicsQueue,
+			.DescriptorPool = imguiPool,
+			.MinImageCount = 3,
+			.ImageCount = 3,
+			.MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+			.Allocator = state.allocator,
+		};
+    	
 		ImGui_ImplVulkan_Init(&init_info, state.renderPass);
 
 		//execute a gpu command to upload imgui font textures
@@ -80,7 +82,7 @@ namespace mc
     void GUI::Deinit() {
 		GlobalState& state = RendererAPI::GetState();
     	
-    	vkDestroyDescriptorPool(state.device, g_imguiPool, nullptr);
+    	vkDestroyDescriptorPool(state.device, g_imguiPool, state.allocator);
     	ImGui_ImplVulkan_Shutdown();
     }
 
