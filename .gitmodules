@@ -4,3 +4,7 @@
 [submodule "MineClone/vendor/glm"]
 	path = MineClone/vendor/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "MineClone/vendor/imgui"]
+	path = MineClone/vendor/imgui
+	url = git@github.com:ocornut/imgui.git
+	branch = docking

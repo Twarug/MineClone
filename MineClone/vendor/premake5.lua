@@ -56,3 +56,42 @@ project "GLFW"
     filter "configurations:Release"
         runtime "Release"
         optimize "on"
+
+project "ImGUI"
+    kind "StaticLib"
+    language "C++"
+    
+    targetdir ("%{wks.location}/bin/" .. outputdir .. "/%{prj.name}")
+    objdir ("%{wks.location}/bin-int/" .. outputdir .. "/%{prj.name}")
+    
+    files {
+        "imgui/imgui.h",
+        "imgui/imgui.cpp",
+        "imgui/imgui_demo.cpp",
+        "imgui/imgui_draw.cpp",
+        "imgui/imgui_widgets.cpp",
+        "imgui/backends/imgui_impl_vulkan.cpp",
+        "imgui/backends/imgui_impl_glfw.cpp",
+        "premake5.lua"
+    }
+    
+    filter "system:windows"
+    systemversion "latest"
+    staticruntime "On"
+    
+    files {
+        
+    }
+    
+    defines
+    {
+        "_CRT_SECURE_NO_WARNINGS"
+    }
+    
+    filter "configurations:Debug"
+        runtime "Debug"
+        symbols "on"
+    
+    filter "configurations:Release"
+        runtime "Release"
+        optimize "on"
