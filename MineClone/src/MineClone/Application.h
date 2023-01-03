@@ -31,6 +31,7 @@ namespace mc
         void Tick();
         void Update();
         void Render() const;
+        void RenderGUI();
         
         
     protected:

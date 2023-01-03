@@ -1,6 +1,7 @@
 ﻿#include "mcpch.h"
 #include "Application.h"
 
+#include "GUI.h"
 #include "Core/Input/Input.h"
 #include "Game/World/ChunkManager.h"
 #include "Game/World/Generator/ChunkGenerator.h"
@@ -34,6 +35,10 @@ namespace mc
 
             RendererAPI::BeginFrame(m_deltaTime, m_player->GetCamera());
             Render();
+
+            GUI::BeginFrame();
+            RenderGUI();
+            GUI::EndFrame();
             RendererAPI::EndFrame();
         }
         
@@ -45,6 +50,7 @@ namespace mc
         m_window = CreateScope<Window>(1280, 720, name);
 
         RendererAPI::Init();
+        GUI::Init();
 
         m_world = CreateScope<World>();
         m_player = CreateScope<Player>(*m_world);
@@ -91,7 +97,8 @@ namespace mc
 
         m_player.reset(nullptr);
         m_world.reset(nullptr);
-        
+
+        GUI::Deinit();
         RendererAPI::Deinit();
     }
 
@@ -125,7 +132,6 @@ namespace mc
                 m_window->LockCursor();
                 m_isFocused = true;
             }
-                
         }
 
         if(m_isFocused)
@@ -151,6 +157,12 @@ namespace mc
                 g_boundaryMesh.Render(glm::translate(Mat4{1}, float3(chunkID * Config::CHUNK_SIZE)));
             }
         }
+    }
+
+    void Application::RenderGUI() {
+        ImGui::ShowDemoWindow();
+
+        // ImGui::BeginTable();
     }
 
     void Application::OnEvent(WindowCloseEvent& ev) {

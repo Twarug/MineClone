@@ -54,11 +54,13 @@ project("MineClone")
         "%{prj.name}/vendor/glfw/include", -- GLFW
         "%{prj.name}/vendor/glm", -- glm
         "%{prj.name}/vendor/stb", -- stb
+        "%{prj.name}/vendor/ImGUI", -- ImGUI
         os.getenv("VULKAN_SDK") .. "/Include", -- Vulkan
     })
     
     links({
         "GLFW", -- GLFW
+        "ImGUI", -- ImGUI
         os.getenv("VULKAN_SDK") .. "/Lib/vulkan-1.lib", -- Vulkan
     })
     

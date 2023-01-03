@@ -77,5 +77,6 @@ namespace mc
         friend class Texture;
         friend class Buffer;
         friend class Mesh;
+        friend class GUI;
     };
 }

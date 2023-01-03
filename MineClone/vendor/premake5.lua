@@ -69,19 +69,27 @@ project "ImGUI"
         "imgui/imgui.cpp",
         "imgui/imgui_demo.cpp",
         "imgui/imgui_draw.cpp",
+        "imgui/imgui_tables.cpp",
         "imgui/imgui_widgets.cpp",
         "imgui/backends/imgui_impl_vulkan.cpp",
         "imgui/backends/imgui_impl_glfw.cpp",
         "premake5.lua"
     }
-    
+
+    includedirs({
+        "imgui",
+        "glfw/include", -- GLFW
+        os.getenv("VULKAN_SDK") .. "/Include", -- Vulkan
+    })
+
+    links({
+        "GLFW", -- GLFW
+        os.getenv("VULKAN_SDK") .. "/Lib/vulkan-1.lib", -- Vulkan
+    })
+
     filter "system:windows"
     systemversion "latest"
     staticruntime "On"
-    
-    files {
-        
-    }
     
     defines
     {
